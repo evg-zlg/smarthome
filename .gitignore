@@ -1,0 +1,39 @@
+# Private credentials must stay local and must never be committed.
+.ssh/
+
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+secrets.yaml
+secrets.yml
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Backups, databases, recordings, and telemetry
+*.backup
+*.bak
+*.db
+*.sqlite
+*.sqlite3
+*.tar
+*.tar.gz
+*.zip
+recordings/
+snapshots/
+telemetry/
+
+# Home Assistant runtime data
+.storage/
+home-assistant_v2.db*
+home-assistant.log*
+deps/
+tts/
+
+# Editors and operating systems
+.DS_Store
+.idea/
+.vscode/
+*.swp
