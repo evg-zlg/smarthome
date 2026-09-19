@@ -1,0 +1,43 @@
+[Unit]
+Description=Smart home Larnitech and VAKIO integration gateway
+After=network-online.target mosquitto.service
+Wants=network-online.target
+Requires=mosquitto.service
+
+[Service]
+Type=simple
+User=smarthome-gateway
+Group=smarthome-gateway
+WorkingDirectory=/opt/smarthome-gateway
+ExecStart=/usr/bin/python3 /opt/smarthome-gateway/app.py
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=15s
+
+Environment=PYTHONUNBUFFERED=1
+EnvironmentFile=-/etc/smarthome-gateway/gateway.env
+
+AmbientCapabilities=
+CapabilityBoundingSet=
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+NoNewPrivileges=yes
+PrivateDevices=yes
+PrivateTmp=yes
+ProtectClock=yes
+ProtectControlGroups=yes
+ProtectHome=yes
+ProtectHostname=yes
+ProtectKernelLogs=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+ProtectSystem=strict
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+SystemCallArchitectures=native
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target
