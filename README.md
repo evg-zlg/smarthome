@@ -33,6 +33,15 @@
 
 Процесс вдохновлён подходом [DD-SDD](https://github.com/anatolii-iumashev/dd-sdd) и адаптирован для эксплуатации умного дома.
 
+## Доступ к устройствам
+
+Устройства и SSH-доступы организованы по клиентам в [`clients/`](clients/).
+Подключение к текущему Raspberry Pi из любого клона репозитория:
+
+```bash
+scripts/device-ssh home rasppi3b
+```
+
 ## Raspberry Pi 3B
 
 - хост: `rasppi3b` (`192.168.0.138`);
