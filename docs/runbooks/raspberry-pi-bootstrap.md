@@ -28,6 +28,13 @@ Docker и Home Assistant:
 sudo bash scripts/bootstrap-raspberry-pi.sh
 ```
 
+Для текущего устройства подключение и запуск из локального клона выполняются
+без интерактивного пароля:
+
+```bash
+scripts/device-ssh home rasppi3b 'sudo bash /home/smarthome/smarthome-bootstrap/scripts/bootstrap-raspberry-pi.sh'
+```
+
 Обновление системы может потребовать перезагрузки. Скрипт сообщает об этом
 строкой `REBOOT_REQUIRED`, но сам устройство не перезагружает.
 

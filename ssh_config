@@ -1,5 +1,3 @@
-Host rasppi3b
-    HostName 192.168.0.138
-    User smarthome
-    IdentityFile /Users/evgeny/Documents/projects/smarthome/.ssh/rasppi3b_ed25519
-    IdentitiesOnly yes
+# Совместимый общий config. Для подключения с ключом используйте:
+# scripts/device-ssh home rasppi3b
+Include clients/home/ssh_config

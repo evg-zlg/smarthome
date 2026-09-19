@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+set -Eeuo pipefail
+
+if [[ $# -lt 2 ]]; then
+  echo "Использование: $0 <client-id> <device-id> [ssh arguments...]" >&2
+  exit 2
+fi
+
+client_id=$1
+device_id=$2
+shift 2
+
+script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+repo_dir=$(cd -- "${script_dir}/.." && pwd)
+client_dir="${repo_dir}/clients/${client_id}"
+ssh_config="${client_dir}/ssh_config"
+identity_file="${client_dir}/credentials/ssh/id_ed25519"
+
+if [[ ! -f ${ssh_config} ]]; then
+  echo "Не найден SSH config клиента: ${ssh_config}" >&2
+  exit 1
+fi
+
+if [[ ! -f ${identity_file} ]]; then
+  echo "Не найден SSH-ключ клиента: ${identity_file}" >&2
+  exit 1
+fi
+
+chmod 600 "${identity_file}"
+exec ssh -F "${ssh_config}" -i "${identity_file}" "${device_id}" "$@"
