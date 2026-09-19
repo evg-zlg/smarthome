@@ -25,12 +25,16 @@ rfc: ../rfc/larnitech-vakio-raspberry-pi.md
 | Nginx Light | 1.26.3-3+deb13u9 | enabled, active | HTTP и будущий reverse proxy |
 | Python | 3.13.5-1 | установлен | Будущий адаптер Larnitech/VAKIO |
 | unattended-upgrades | 2.12 | enabled, active | Автоматические обновления безопасности |
+| smarthome-gateway | каркас | enabled, active | Изолированный процесс будущего адаптера |
+| gateway health timer | systemd | enabled, active | Контроль ресурсов каждые 5 минут |
+| gateway backup timer | systemd | enabled, active | Ежедневный снимок несекретной конфигурации |
 
 ## Сетевые границы
 
 - SSH слушает TCP `22` на LAN-интерфейсах.
 - Nginx слушает TCP `80` на IPv4 и IPv6; опубликованы только статическая
-  заглушка и `/healthz`.
+  заглушка, `/healthz` и proxy `/gateway/healthz`.
+- Каркас gateway слушает только `127.0.0.1:8080`.
 - Mosquitto слушает TCP `1883` только на `127.0.0.1`.
 - Анонимный MQTT-доступ запрещён и фактически отклоняется брокером.
 - MQTT-доступ из LAN не включён до появления VAKIO, создания отдельных
@@ -39,10 +43,22 @@ rfc: ../rfc/larnitech-vakio-raspberry-pi.md
 ## Проверенное поведение
 
 - `GET http://127.0.0.1/healthz` возвращает `200` и `ok`.
+- `GET http://127.0.0.1/gateway/healthz` возвращает безопасное состояние
+  `waiting_for_configuration`, `control_enabled=false`.
 - Анонимная MQTT-публикация завершается `Connection Refused: not authorised`.
 - После обновления и перезагрузки ошибочных systemd units нет.
 - Список ожидающих APT-обновлений пуст.
 - NTP синхронизирован; системный часовой пояс — `Asia/Yekaterinburg` (UTC+5).
+- Аппаратный watchdog BCM2835 обслуживается systemd: runtime timeout 1 минута,
+  reboot watchdog 2 минуты.
+- Persistent journal ограничен 128 MiB и 14 днями, резерв свободного места —
+  512 MiB.
+- Health timer записывает в `/run/smarthome-gateway-health` загрузку диска,
+  доступную память и температуру CPU. Проверенные значения: 25%, 572 MiB и
+  42.9 °C; состояние `ok`.
+- Ежедневный локальный backup хранится в `/var/backups/smarthome` с правами
+  `0700`; архивы имеют права `0600` и срок хранения 7 дней.
+- Systemd hardening каркаса gateway имеет оценку exposure `3.0 OK`.
 
 ## Известные ограничения
 
@@ -50,3 +66,6 @@ rfc: ../rfc/larnitech-vakio-raspberry-pi.md
 - Пользователь и ACL MQTT ещё не созданы.
 - Интеграционный Python-сервис ещё не реализован.
 - Larnitech и VAKIO не подключались и не опрашивались.
+- Backup находится на той же SD-карте и предназначен только для локального
+  отката конфигурации; для восстановления после отказа носителя нужен внешний
+  backup target.

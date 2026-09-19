@@ -1,0 +1,14 @@
+[Unit]
+Description=Smart home gateway resource health check
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/check-smarthome-gateway-health
+User=root
+Group=root
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=strict
+ReadWritePaths=/run

@@ -1,0 +1,13 @@
+[Unit]
+Description=Run smart home gateway resource health check every five minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+RandomizedDelaySec=30s
+AccuracySec=15s
+Persistent=true
+Unit=smarthome-gateway-health.service
+
+[Install]
+WantedBy=timers.target
