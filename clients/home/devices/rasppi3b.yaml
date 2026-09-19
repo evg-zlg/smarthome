@@ -1,0 +1,12 @@
+id: rasppi3b
+type: raspberry-pi
+model: Raspberry Pi 3 Model B Plus Rev 1.4
+address: 192.168.0.138
+ssh_user: smarthome
+ssh_host_alias: rasppi3b
+credential: ../credentials/ssh/id_ed25519
+os: Debian GNU/Linux 13 (trixie)
+architecture: aarch64
+notes:
+  - Интеграционный узел Larnitech и VAKIO.
+  - Пользователь автоматизации должен иметь passwordless sudo.
