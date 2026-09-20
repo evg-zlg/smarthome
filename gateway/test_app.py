@@ -28,6 +28,8 @@ class GatewayTests(unittest.TestCase):
         app.mqtt_client = FakeClient()
         app.last_device_message_monotonic = time.monotonic()
         app.pending_confirmation = None
+        app.state["mqtt"].update(status="waiting", updated_at=None, error=None)
+        app.state["larnitech"].update(status="not_configured", updated_at=None, devices=[], error=None)
         app.state["vakio"]["topics"] = {}
 
     def test_allowed_vakio_command(self):
@@ -55,6 +57,26 @@ class GatewayTests(unittest.TestCase):
         app.last_device_message_monotonic = None
         with self.assertRaisesRegex(RuntimeError, "telemetry is not fresh"):
             app.publish_vakio({"command": "state", "value": "on"})
+
+    def test_snapshot_contains_dashboard_contract(self):
+        app.state["mqtt"].update(status="online", updated_at=app.utc_timestamp())
+        app.state["larnitech"].update(
+            status="online",
+            updated_at=app.utc_timestamp(),
+            devices=[
+                {"addr": "315:36", "type": "co2", "status": {"state": 640}},
+                {"addr": "456:237", "type": "connection", "status": {"state": "opened"}},
+                {"addr": "456:249", "type": "conditioner", "status": {"state": "off"}},
+            ],
+        )
+        result = app.snapshot()
+        observed = result["observed"]
+
+        self.assertEqual(observed["services"]["mqtt"]["status"], "online")
+        self.assertEqual(observed["api_channels"]["total"], 3)
+        self.assertEqual(observed["climate"][0]["value"], 640)
+        self.assertTrue(observed["air_conditioner"]["connected"])
+        self.assertTrue(observed["read_only"])
 
 
 if __name__ == "__main__":
