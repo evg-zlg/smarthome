@@ -34,7 +34,7 @@ devices:
     ipv4: 192.168.1.183
     mac: "b8:27:eb:aa:93:b7"
     reserve_ethernet_ipv4: 192.168.1.166
-    services: [ssh/22, http/80, mqtt/1883, gateway/127.0.0.1:8080]
+    services: ["ssh/22", "http/80", "mqtt/1883", "gateway/127.0.0.1:8080"]
     functions: [system-map, mqtt-broker, larnitech-adapter, vakio-adapter]
   - id: larnitech-mf14c
     name: Larnitech Metaforsa MF-14.C
@@ -44,7 +44,9 @@ devices:
     mac: "00:00:7d:40:2e:89"
     services: [ssh/22, http/80, api2-websocket/2041]
     functions: [sensors, lighting, curtains, automation]
-    inventory_status: api_key_required
+    inventory_status: confirmed_via_api2
+    api2_entity_count: 83
+    configuration_note: "AC2-AC10 removed 2026-09-20; AC1 retained"
   - id: unknown-162
     name: Неопознанное устройство 162
     role: unknown
