@@ -32,7 +32,7 @@ sudo bash scripts/bootstrap-raspberry-pi.sh
 без интерактивного пароля:
 
 ```bash
-scripts/device-ssh home rasppi3b 'sudo bash /home/smarthome/smarthome-bootstrap/scripts/bootstrap-raspberry-pi.sh'
+scripts/device-ssh office rasppi3b 'sudo bash /home/smarthome/smarthome-bootstrap/scripts/bootstrap-raspberry-pi.sh'
 ```
 
 Обновление системы может потребовать перезагрузки. Скрипт сообщает об этом

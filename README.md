@@ -39,12 +39,12 @@
 Подключение к текущему Raspberry Pi из любого клона репозитория:
 
 ```bash
-scripts/device-ssh home rasppi3b
+scripts/device-ssh office rasppi3b
 ```
 
 ## Raspberry Pi 3B
 
-- хост: `rasppi3b` (`192.168.0.138`);
+- хост: `rasppi3b` (`192.168.1.183` по Wi-Fi, `192.168.1.166` по Ethernet);
 - пользователь автоматизации: `smarthome`;
 - подключение из корня репозитория: `ssh -F ssh_config rasppi3b`;
 - SSH-конфигурация: [`ssh_config`](ssh_config);
