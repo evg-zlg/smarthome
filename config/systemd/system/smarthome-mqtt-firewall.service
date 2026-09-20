@@ -1,0 +1,14 @@
+[Unit]
+Description=Restrict the VAKIO MQTT listener to the known device address
+Before=mosquitto.service
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/apply-smarthome-mqtt-firewall start
+ExecStop=/usr/local/sbin/apply-smarthome-mqtt-firewall stop
+
+[Install]
+WantedBy=multi-user.target

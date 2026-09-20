@@ -41,6 +41,8 @@ class FakeResult:
 class FakeClient:
     def publish(self, topic, value, qos):
         self.message = (topic, value, qos)
+        message = type("Message", (), {"topic": topic, "payload": value.encode()})()
+        threading.Timer(0.01, app.on_message, args=(self, None, message)).start()
         return FakeResult()
 
 
