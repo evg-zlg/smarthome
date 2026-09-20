@@ -1,3 +1,3 @@
 # Совместимый общий config. Для подключения с ключом используйте:
-# scripts/device-ssh home rasppi3b
-Include clients/home/ssh_config
+# scripts/device-ssh office rasppi3b
+Include clients/office/ssh_config
