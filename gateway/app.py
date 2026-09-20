@@ -23,9 +23,10 @@ LARNITECH_API_KEY = os.environ.get("LARNITECH_API_KEY", "")
 LARNITECH_POLL_SECONDS = max(10, int(os.environ.get("LARNITECH_POLL_SECONDS", "30")))
 LARNITECH_SUBSCRIBE_ADDRS = tuple(
     addr.strip()
-    for addr in os.environ.get("LARNITECH_SUBSCRIBE_ADDRS", "315:36").split(",")
+    for addr in os.environ.get("LARNITECH_SUBSCRIBE_ADDRS", "315:36,456:249").split(",")
     if addr.strip()
 )
+LARNITECH_DETAILED_REFRESH_ADDRS = frozenset({"456:249"})
 MQTT_HOST = os.environ.get("MQTT_HOST", "127.0.0.1")
 MQTT_PORT = int(os.environ.get("MQTT_PORT", "1883"))
 MQTT_USERNAME = os.environ.get("MQTT_USERNAME", "gateway")
@@ -252,7 +253,11 @@ def merge_larnitech_devices(devices: list[dict[str, Any]], updates: list[dict[st
         elif isinstance(incoming, str):
             device_status = device.setdefault("status", {})
             device_status["raw"] = incoming
-            device_status["state"] = decode_larnitech_event_state(device.get("type"), incoming)
+            # AC events are packed binary frames. Preserve the last detailed
+            # climate state until the worker refreshes the entity with a
+            # status-get request instead of showing an opaque hex value.
+            if device.get("type") != "AC":
+                device_status["state"] = decode_larnitech_event_state(device.get("type"), incoming)
         else:
             continue
         changed.append(addr)
@@ -470,6 +475,15 @@ def larnitech_worker() -> None:
                     changed = merge_larnitech_devices(larnitech["devices"], updates) if isinstance(updates, list) else []
                     if event_type == "statuses" and changed:
                         larnitech.update(updated_at=now, last_event_at=now)
+                detailed_refreshes = (
+                    LARNITECH_DETAILED_REFRESH_ADDRS.intersection(changed)
+                    if event_type == "statuses"
+                    else set()
+                )
+                for addr in sorted(detailed_refreshes):
+                    connection.send(json.dumps({
+                        "request": "status-get", "addr": addr, "status": "detailed",
+                    }))
                 if response_type == "status-get":
                     keepalive_pending = False
                 elif event_type == "statuses" and changed:
