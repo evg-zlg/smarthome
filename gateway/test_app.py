@@ -1,6 +1,8 @@
 import importlib.util
 import os
 import sys
+import threading
+import time
 import unittest
 import json
 from pathlib import Path
@@ -15,7 +17,9 @@ except ModuleNotFoundError:
     paho_mqtt = ModuleType("paho.mqtt")
     paho_client = ModuleType("paho.mqtt.client")
     paho_client.MQTT_ERR_SUCCESS = 0
+    paho_client.MQTTv5 = 5
     paho_client.CallbackAPIVersion = SimpleNamespace(VERSION2=2)
+    paho_client.SubscribeOptions = lambda qos, noLocal: SimpleNamespace(qos=qos, noLocal=noLocal)
     paho_client.Client = object
     paho_mqtt.client = paho_client
     paho.mqtt = paho_mqtt
@@ -65,6 +69,8 @@ class FakeWebSocket:
 class GatewayTests(unittest.TestCase):
     def setUp(self):
         app.mqtt_client = FakeClient()
+        app.last_device_message_monotonic = time.monotonic()
+        app.pending_confirmation = None
         app.scenario_runs.clear()
 
     def test_allowed_vakio_command(self):
@@ -82,7 +88,7 @@ class GatewayTests(unittest.TestCase):
             def __eq__(self, other):
                 return other == 0
 
-        client = SimpleNamespace(subscribe=lambda topic: None)
+        client = SimpleNamespace(subscribe=lambda topic, options=None: None)
         app.on_connect(client, None, {}, SuccessReasonCode())
         self.assertEqual(app.state["mqtt"]["status"], "online")
 
