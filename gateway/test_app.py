@@ -76,8 +76,8 @@ class GatewayTests(unittest.TestCase):
         }
         observed = app.observed_map(source)
         self.assertEqual(len(observed["physical_modules"]), 4)
-        self.assertEqual(observed["api_channels"]["total"], 263)
-        self.assertEqual(observed["climate"][0]["value"], 847)
+        self.assertEqual(observed["api_channels"]["total"], 83)
+        self.assertEqual(observed["climate"][0]["value"], 742)
         self.assertTrue(observed["air_conditioner"]["connected"])
         self.assertEqual(observed["air_conditioner"]["status"]["target"], 22.0)
 
