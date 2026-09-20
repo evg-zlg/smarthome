@@ -511,7 +511,7 @@ def vakio_larnitech_command_worker(command: dict[str, str]) -> None:
                 ):
                     continue
                 publish_vakio(requested)
-            LOG.warning("VAKIO command from Larnitech confirmed: %s=%s", key, value)
+            LOG.warning("VAKIO command from Larnitech processed: %s=%s", key, value)
         except (PermissionError, RuntimeError, ValueError) as exc:
             LOG.warning("VAKIO command from Larnitech failed: %s=%s: %s", key, value, exc)
             with lock:
@@ -869,22 +869,23 @@ def publish_vakio(command: dict[str, Any]) -> tuple[str, str]:
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 pending_confirmation = None
-                if key == "state" and value == "off":
-                    # This Base Smart revision executes 06000 but does not
-                    # publish state=off afterwards. Persist the commanded safe
-                    # state only after the raw QoS1 publish was accepted.
-                    retained_result = mqtt_client.publish(topic, value, qos=1, retain=True)
-                    if retained_result.rc != mqtt.MQTT_ERR_SUCCESS:
-                        raise RuntimeError(f"MQTT off-state persistence failed: {retained_result.rc}")
-                    state["vakio"]["topics"][topic] = value
-                    state["vakio"]["confirmed_topics"].pop(topic, None)
-                    state["vakio"]["commanded_topics"][topic] = {
-                        "value": value, "updated_at": utc_timestamp(),
-                        "source": "accepted_without_device_confirmation",
-                    }
-                    state["vakio"].update(updated_at=utc_timestamp(), error=None)
-                    break
-                raise RuntimeError("VAKIO did not confirm the command")
+                # This Base Smart revision executes operating commands but
+                # does not reliably publish state, mode, or speed afterwards.
+                # Record the result as commanded (never confirmed) after the
+                # broker accepted the single QoS1 publish. This also keeps the
+                # Larnitech selectors aligned with the last command, so a later
+                # opposite setStatus produces a real event.
+                retained_result = mqtt_client.publish(topic, value, qos=1, retain=True)
+                if retained_result.rc != mqtt.MQTT_ERR_SUCCESS:
+                    raise RuntimeError(f"MQTT commanded-state persistence failed: {retained_result.rc}")
+                state["vakio"]["topics"][topic] = value
+                state["vakio"]["confirmed_topics"].pop(topic, None)
+                state["vakio"]["commanded_topics"][topic] = {
+                    "value": value, "updated_at": utc_timestamp(),
+                    "source": "accepted_without_device_confirmation",
+                }
+                state["vakio"].update(updated_at=utc_timestamp(), error=None)
+                break
             confirmation.wait(remaining)
         pending_confirmation = None
     return topic, value

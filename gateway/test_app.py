@@ -189,7 +189,7 @@ class GatewayTests(unittest.TestCase):
             "on",
         )
 
-    def test_retained_value_cannot_confirm_a_new_command(self):
+    def test_missing_device_reply_is_recorded_as_commanded_not_confirmed(self):
         class PresenceOnlyClient:
             def publish(self, topic, value, qos, retain=False):
                 if value == "0687":
@@ -207,8 +207,15 @@ class GatewayTests(unittest.TestCase):
                 app.mqtt_client, None,
                 SimpleNamespace(topic="vakio/state", payload=b"on", retain=True),
             )
-            with self.assertRaisesRegex(RuntimeError, "did not confirm"):
-                app.publish_vakio({"command": "state", "value": "on"})
+            self.assertEqual(
+                app.publish_vakio({"command": "state", "value": "on"}),
+                ("vakio/state", "on"),
+            )
+            self.assertNotIn("vakio/state", app.state["vakio"]["confirmed_topics"])
+            self.assertEqual(
+                app.state["vakio"]["commanded_topics"]["vakio/state"]["value"],
+                "on",
+            )
         finally:
             app.mqtt_client = original_client
             app.VAKIO_CONFIRM_TIMEOUT = original_timeout
