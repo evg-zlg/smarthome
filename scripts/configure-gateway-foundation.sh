@@ -18,6 +18,12 @@ fi
 install -d -o root -g root -m 0755 /opt/smarthome-gateway
 install -o root -g root -m 0755 "${repo_dir}/gateway/app.py" \
   /opt/smarthome-gateway/app.py
+install -o root -g root -m 0644 "${repo_dir}/config/www/index.html" \
+  /var/www/smarthome/index.html
+install -o root -g mosquitto -m 0640 "${repo_dir}/config/mosquitto/acl" \
+  /etc/mosquitto/acl
+install -o root -g root -m 0644 "${repo_dir}/config/mosquitto/10-local-bootstrap.conf" \
+  /etc/mosquitto/conf.d/10-local-bootstrap.conf
 install -d -o root -g smarthome-gateway -m 0750 /etc/smarthome-gateway
 install -d -o root -g root -m 0700 /var/backups/smarthome
 
@@ -33,6 +39,8 @@ install -o root -g root -m 0755 "${repo_dir}/scripts/check-gateway-health.sh" \
   /usr/local/sbin/check-smarthome-gateway-health
 install -o root -g root -m 0755 "${repo_dir}/scripts/backup-gateway-config.sh" \
   /usr/local/sbin/backup-smarthome-gateway-config
+install -o root -g root -m 0755 "${repo_dir}/scripts/configure-vakio-mqtt.py" \
+  /usr/local/sbin/configure-vakio-mqtt
 
 for unit in \
   smarthome-gateway.service \
@@ -48,6 +56,7 @@ nginx -t
 systemctl daemon-reload
 systemctl restart systemd-journald
 systemctl reload nginx
+systemctl restart mosquitto
 systemctl enable --now \
   smarthome-gateway.service \
   smarthome-gateway-health.timer \
