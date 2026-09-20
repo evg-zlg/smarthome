@@ -23,12 +23,16 @@ Wrapper вычисляет путь текущего клона, выбирае�
 ## Текущее устройство
 
 ```bash
-scripts/device-ssh home rasppi3b
-scripts/device-ssh home rasppi3b 'sudo -n id'
+scripts/device-ssh office rasppi3b
+scripts/device-ssh office rasppi3b 'sudo -n id'
 ```
 
 На `rasppi3b` пользователь `smarthome` входит по ключу и имеет полный
 passwordless sudo через `/etc/sudoers.d/90-smarthome`.
+
+Профили Wi-Fi вместе с паролями хранятся рядом с доступами клиента в
+`clients/<client-id>/credentials/wifi/`. Для `office` эталонный профиль —
+`office-wifi.nmconnection`.
 
 ## Добавление клиента
 
