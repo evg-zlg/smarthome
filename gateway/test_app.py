@@ -99,6 +99,10 @@ class GatewayTests(unittest.TestCase):
         app.fresh_topic_versions.clear()
         app.fresh_topic_values.clear()
         app.scenario_runs.clear()
+        with app.lock:
+            app.state["vakio"]["topics"] = {}
+            app.state["vakio"]["confirmed_topics"] = {}
+            app.state["vakio"]["commanded_topics"] = {}
 
     def test_allowed_vakio_command(self):
         self.assertEqual(app.publish_vakio({"command": "speed", "value": 4}), ("vakio/speed", "4"))
@@ -175,6 +179,15 @@ class GatewayTests(unittest.TestCase):
         self.assertIsNone(app.last_device_message_monotonic)
         self.assertEqual(synced, [])
         self.assertNotIn("vakio/state", app.fresh_topic_values)
+        self.assertNotIn("vakio/state", app.state["vakio"]["confirmed_topics"])
+
+    def test_non_retained_message_is_exposed_as_confirmed(self):
+        message = SimpleNamespace(topic="vakio/state", payload=b"on", retain=False)
+        app.on_message(app.mqtt_client, None, message)
+        self.assertEqual(
+            app.state["vakio"]["confirmed_topics"]["vakio/state"]["value"],
+            "on",
+        )
 
     def test_retained_value_cannot_confirm_a_new_command(self):
         class PresenceOnlyClient:
