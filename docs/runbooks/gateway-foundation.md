@@ -25,8 +25,10 @@ curl --fail --silent http://127.0.0.1/gateway/map | \
 Нормальное состояние текущего контура: `MQTT: online`, `VAKIO: online`,
 `control_enabled=true` для ручных команд VAKIO и `observed.read_only=true` для
 карты наблюдения. Управление Larnitech независимо: `scenario_control.enabled`
-должно оставаться `false`, а число `allowed=true` — нулевым, пока пользователь
-не выбрал сценарии для runtime-allowlist.
+должно быть `true`, а `allowed=true` — только у семи исследованных адресов
+`315:246`, `315:250`, `407:246`, `407:247`, `407:248`, `456:46`, `456:47`.
+Это состояние разрешает ручной запуск через панель, но само по себе не запускает
+ни один сценарий.
 
 В объекте `larnitech` нормальное соединение имеет `status: online`, адрес
 `315:36` в `subscribed_addrs` и актуальный `heartbeat_at`. Поле
