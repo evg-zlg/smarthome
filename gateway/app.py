@@ -29,6 +29,9 @@ VAKIO_TOPIC = os.environ.get("VAKIO_TOPIC", "vakio").strip("/")
 CONTROL_ENABLED = os.environ.get("CONTROL_ENABLED", "false").lower() == "true"
 VAKIO_TELEMETRY_MAX_AGE = max(15, int(os.environ.get("VAKIO_TELEMETRY_MAX_AGE", "90")))
 VAKIO_CONFIRM_TIMEOUT = max(1, int(os.environ.get("VAKIO_CONFIRM_TIMEOUT", "8")))
+VAKIO_PRESENCE_POLL_SECONDS = max(
+    30, int(os.environ.get("VAKIO_PRESENCE_POLL_SECONDS", "60"))
+)
 VAKIO_MODES = (
     "inflow", "inflow_max", "recuperator", "winter",
     "outflow", "outflow_max", "night",
@@ -440,6 +443,31 @@ def desired_larnitech_vakio_states(command: str) -> dict[str, str]:
     return desired
 
 
+def larnitech_vakio_state(devices: list[dict[str, Any]]) -> dict[str, Any]:
+    """Read the user-facing VAKIO state from its Larnitech selectors."""
+    states = {
+        str(device.get("addr")): (device.get("status") or {}).get("state")
+        for device in devices
+        if isinstance(device, dict) and isinstance(device.get("status"), dict)
+    }
+    mode = next(
+        (name for name, addr in VAKIO_LARNITECH_MODE_ADDRS.items() if states.get(addr) == "on"),
+        None,
+    )
+    speed = next(
+        (value for value, addr in VAKIO_LARNITECH_SPEED_ADDRS.items() if states.get(addr) == "on"),
+        None,
+    )
+    power = states.get(VAKIO_LARNITECH_POWER_ADDR)
+    return {
+        "available": power in {"on", "off"},
+        "power": power if power in {"on", "off"} else None,
+        "mode": mode,
+        "speed": speed,
+        "source": "larnitech",
+    }
+
+
 def sync_larnitech_vakio_states(command: str) -> None:
     """Reflect confirmed device telemetry into the Larnitech virtual selectors."""
     if not VAKIO_LARNITECH_BRIDGE_ENABLED or not LARNITECH_API_KEY:
@@ -795,6 +823,18 @@ def ensure_vakio_fresh_telemetry() -> None:
             confirmation.wait(remaining)
 
 
+def vakio_presence_worker() -> None:
+    """Keep device presence current without changing power, mode, or speed."""
+    while True:
+        try:
+            ensure_vakio_fresh_telemetry()
+        except RuntimeError as exc:
+            LOG.warning("VAKIO presence refresh failed: %s", exc)
+            with lock:
+                state["vakio"].update(status="waiting", error=str(exc))
+        time.sleep(VAKIO_PRESENCE_POLL_SECONDS)
+
+
 def publish_vakio(command: dict[str, Any]) -> tuple[str, str]:
     global pending_confirmation
     if not CONTROL_ENABLED:
@@ -878,6 +918,9 @@ def snapshot() -> dict[str, Any]:
             "mode_addrs": VAKIO_LARNITECH_MODE_ADDRS,
             "speed_addrs": VAKIO_LARNITECH_SPEED_ADDRS,
         },
+        vakio_larnitech_state=larnitech_vakio_state(
+            result.get("larnitech", {}).get("devices", [])
+        ),
     )
     if not LARNITECH_API_KEY:
         result["larnitech"]["status"] = "api_key_required"
@@ -940,4 +983,5 @@ if __name__ == "__main__":
     if LARNITECH_API_KEY:
         threading.Thread(target=larnitech_worker, daemon=True).start()
     mqtt_client = start_mqtt()
+    threading.Thread(target=vakio_presence_worker, daemon=True).start()
     ThreadingHTTPServer((HTTP_HOST, HTTP_PORT), Handler).serve_forever()
