@@ -195,9 +195,10 @@ Larnitech и приточно-вытяжным рекуператором VAKIO.
   `vakio/workmode`, `vakio/speed`. Gateway подписан с MQTT v5 `noLocal`.
 - Включены раздельные listener'ы Mosquitto и nftables-фильтр. VAKIO показывает
   `Онлайн`; gateway и Larnitech показывают `online`.
-- Идемпотентная команда `state=off` вернула `confirmed=true`; после теста
-  управление снова отключено (`CONTROL_ENABLED=false`).
+- Идемпотентная команда `state=off` вернула `confirmed=true`. Позднее включено
+  ручное управление `state=on/off` из локальной панели; автоматизация по CO2
+  остаётся отключённой.
 - Добавлены аппаратный watchdog, ограничение persistent journal, пятиминутный
   health timer и ежедневный локальный снимок несекретной конфигурации.
-- Изолированный каркас gateway-сервиса запущен от отдельного системного
-  пользователя и сообщает `control_enabled=false` до появления конфигурации.
+- Изолированный gateway-сервис запущен от отдельного системного пользователя;
+  ручной VAKIO-контур работает с `control_enabled=true`.
