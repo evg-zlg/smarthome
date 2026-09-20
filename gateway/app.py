@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import threading
 import time
 from datetime import datetime, timezone
@@ -33,6 +34,62 @@ VAKIO_TOPIC = os.environ.get("VAKIO_TOPIC", "vakio").strip("/")
 CONTROL_ENABLED = os.environ.get("CONTROL_ENABLED", "false").lower() == "true"
 VAKIO_TELEMETRY_MAX_AGE = max(15, int(os.environ.get("VAKIO_TELEMETRY_MAX_AGE", "90")))
 VAKIO_CONFIRM_TIMEOUT = max(1, int(os.environ.get("VAKIO_CONFIRM_TIMEOUT", "8")))
+LARNITECH_SCENARIO_CONTROL_ENABLED = (
+    os.environ.get("LARNITECH_SCENARIO_CONTROL_ENABLED", "false").lower() == "true"
+)
+LARNITECH_SCENARIO_COOLDOWN_SECONDS = max(
+    5, int(os.environ.get("LARNITECH_SCENARIO_COOLDOWN_SECONDS", "30"))
+)
+
+# This immutable registry is the first allowlist boundary. The HTTP API never
+# accepts an API2 status payload, only one of these exact scenario addresses.
+SCENARIO_REGISTRY: dict[str, dict[str, str]] = {
+    "315:246": {
+        "name": "ушел",
+        "risk": "high",
+        "summary": "Закрывает шторы, выключает группы света и сценарий температуры.",
+    },
+    "315:250": {
+        "name": "Доброе утро",
+        "risk": "medium",
+        "summary": "Включает свет и с задержкой открывает обе группы штор.",
+    },
+    "407:246": {
+        "name": "я пришел",
+        "risk": "high",
+        "summary": "Открывает шторы, включает свет и запускает температурный сценарий.",
+    },
+    "407:247": {
+        "name": "я ушел",
+        "risk": "high",
+        "summary": "Запускает «ушел», выключает кондиционер и управляет светом.",
+    },
+    "407:248": {
+        "name": "Спокойной ночи",
+        "risk": "high",
+        "summary": "Закрывает шторы, выключает свет и выполняет отложенное затухание.",
+    },
+    "456:46": {
+        "name": "темпер 1",
+        "risk": "medium",
+        "summary": "Переключает температурную автоматику по времени и состоянию «я ушел».",
+    },
+    "456:47": {
+        "name": "темпер",
+        "risk": "high",
+        "summary": "Автоматически включает и выключает кондиционер по температуре.",
+    },
+}
+configured_scenario_allowlist = {
+    addr.strip()
+    for addr in os.environ.get("LARNITECH_SCENARIO_ALLOWLIST", "").split(",")
+    if addr.strip()
+}
+unknown_scenario_addrs = configured_scenario_allowlist - SCENARIO_REGISTRY.keys()
+if unknown_scenario_addrs:
+    raise RuntimeError(f"Unknown Larnitech scenario allowlist addresses: {sorted(unknown_scenario_addrs)}")
+LARNITECH_SCENARIO_ALLOWLIST = frozenset(configured_scenario_allowlist)
+REQUEST_ID_RE = re.compile(r"^[A-Za-z0-9._:-]{8,80}$")
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 LOG = logging.getLogger("smarthome-gateway")
@@ -51,6 +108,8 @@ state: dict[str, Any] = {
 mqtt_client: mqtt.Client | None = None
 last_device_message_monotonic: float | None = None
 pending_confirmation: tuple[str, str] | None = None
+scenario_guard = threading.Lock()
+scenario_runs: dict[str, dict[str, Any]] = {}
 
 
 def utc_timestamp() -> str:
@@ -227,6 +286,146 @@ def open_larnitech_connection() -> tuple[websocket.WebSocket, list[dict[str, Any
     return connection, devices
 
 
+def larnitech_exchange(connection: websocket.WebSocket, request: dict[str, Any]) -> dict[str, Any]:
+    connection.send(json.dumps(request, separators=(",", ":")))
+    response = json.loads(connection.recv(), strict=False)
+    if not isinstance(response, dict):
+        raise ValueError("Larnitech response is not an object")
+    if response.get("error"):
+        raise ValueError(f"Larnitech request failed: {response.get('error')}")
+    return response
+
+
+def scenario_state(response: dict[str, Any], addr: str) -> str | None:
+    devices = response.get("devices")
+    if not isinstance(devices, list):
+        return None
+    device = next((item for item in devices if item.get("addr") == addr), None)
+    if not isinstance(device, dict):
+        return None
+    status = device.get("status")
+    if not isinstance(status, dict):
+        return None
+    value = status.get("state")
+    return str(value) if value is not None else None
+
+
+def scenario_status_set_succeeded(response: dict[str, Any], addr: str) -> bool:
+    devices = response.get("devices")
+    if not isinstance(devices, list):
+        return False
+    return any(
+        isinstance(device, dict)
+        and device.get("addr") == addr
+        and device.get("success") is True
+        for device in devices
+    )
+
+
+def scenario_inventory_entity(addr: str) -> dict[str, Any] | None:
+    with lock:
+        larnitech = state["larnitech"]
+        if larnitech.get("status") != "online":
+            return None
+        inventory_age = age_seconds(larnitech.get("heartbeat_at") or larnitech.get("updated_at"))
+        if inventory_age is None or inventory_age > LARNITECH_POLL_SECONDS * 3:
+            return None
+        devices = larnitech.get("devices", [])
+        entity = entity_by_addr(devices, addr) if isinstance(devices, list) else None
+        return json.loads(json.dumps(entity)) if entity else None
+
+
+def trigger_larnitech_scenario(addr: str, request_id: str) -> dict[str, Any]:
+    """Trigger one fixed scenario and confirm the API2 result synchronously."""
+    if not LARNITECH_SCENARIO_CONTROL_ENABLED:
+        raise PermissionError("Larnitech scenario control is disabled")
+    if addr not in LARNITECH_SCENARIO_ALLOWLIST:
+        raise PermissionError("Larnitech scenario is not allowlisted")
+    if not REQUEST_ID_RE.fullmatch(request_id):
+        raise ValueError("Invalid request_id")
+    if not LARNITECH_API_KEY:
+        raise RuntimeError("Larnitech API key is not configured")
+
+    entity = scenario_inventory_entity(addr)
+    if entity is None:
+        raise RuntimeError("Larnitech inventory is unavailable")
+    if entity.get("type") != "script" or entity.get("name") != SCENARIO_REGISTRY[addr]["name"]:
+        raise RuntimeError("Larnitech scenario identity mismatch")
+
+    started = time.monotonic()
+    with scenario_guard:
+        previous = scenario_runs.get(addr)
+        if previous and previous.get("in_progress"):
+            raise RuntimeError("Larnitech scenario is already running")
+        if previous and previous.get("request_id") == request_id:
+            raise RuntimeError("Duplicate Larnitech scenario request")
+        if previous and started - float(previous.get("started_monotonic", 0)) < LARNITECH_SCENARIO_COOLDOWN_SECONDS:
+            raise RuntimeError("Larnitech scenario cooldown is active")
+        scenario_runs[addr] = {
+            "in_progress": True,
+            "request_id": request_id,
+            "started_monotonic": started,
+            "started_at": utc_timestamp(),
+        }
+
+    LOG.warning("Larnitech scenario requested addr=%s name=%s request_id=%s", addr, SCENARIO_REGISTRY[addr]["name"], request_id)
+    connection: websocket.WebSocket | None = None
+    try:
+        connection = websocket.create_connection(LARNITECH_WS_URL, timeout=10)
+        authorization = larnitech_exchange(
+            connection, {"request": "authorize", "key": LARNITECH_API_KEY}
+        )
+        if authorization.get("response") != "authorize":
+            raise ValueError("Larnitech authorization was not confirmed")
+
+        accepted = larnitech_exchange(
+            connection,
+            {"request": "status-set", "addr": addr, "status": {"state": "on"}},
+        )
+        if accepted.get("response") != "status-set":
+            raise ValueError("Larnitech status-set was not acknowledged")
+        if not scenario_status_set_succeeded(accepted, addr):
+            raise ValueError("Larnitech status-set did not report success")
+        accepted_state = scenario_state(accepted, addr)
+
+        observed = larnitech_exchange(
+            connection, {"request": "status-get", "addr": addr, "status": "detailed"}
+        )
+        if observed.get("response") != "status-get":
+            raise ValueError("Larnitech status-get confirmation failed")
+        observed_state = scenario_state(observed, addr)
+        if observed_state not in {"on", "off"} and accepted_state not in {"on", "off"}:
+            raise ValueError("Larnitech scenario state was not confirmed")
+
+        result = {
+            "accepted": True,
+            "confirmed": True,
+            "addr": addr,
+            "name": SCENARIO_REGISTRY[addr]["name"],
+            "request_id": request_id,
+            "accepted_state": accepted_state,
+            "observed_state": observed_state,
+            "confirmed_at": utc_timestamp(),
+            "physical_result_verified": False,
+        }
+        LOG.warning(
+            "Larnitech scenario confirmed addr=%s name=%s request_id=%s observed_state=%s",
+            addr, SCENARIO_REGISTRY[addr]["name"], request_id, observed_state,
+        )
+        return result
+    except Exception:
+        LOG.exception("Larnitech scenario failed addr=%s request_id=%s", addr, request_id)
+        raise
+    finally:
+        if connection is not None:
+            connection.close()
+        with scenario_guard:
+            current = scenario_runs.get(addr, {})
+            if current.get("request_id") == request_id:
+                current["in_progress"] = False
+                current["completed_at"] = utc_timestamp()
+
+
 def larnitech_worker() -> None:
     if not LARNITECH_API_KEY:
         return
@@ -321,13 +520,19 @@ def on_message(client: mqtt.Client, userdata: object, message: mqtt.MQTTMessage)
 
 
 def start_mqtt() -> mqtt.Client:
-    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id="smarthome-gateway")
+    client = mqtt.Client(
+        mqtt.CallbackAPIVersion.VERSION2,
+        client_id="smarthome-gateway",
+        protocol=mqtt.MQTTv5,
+    )
     if MQTT_PASSWORD:
         client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
     client.on_connect = on_connect
     client.on_disconnect = on_disconnect
     client.on_message = on_message
-    client.connect_async(MQTT_HOST, MQTT_PORT, keepalive=30)
+    # The broker is a required local systemd dependency, so a synchronous
+    # initial connect is deterministic and lets systemd retry on failure.
+    client.connect(MQTT_HOST, MQTT_PORT, keepalive=30)
     client.loop_start()
     return client
 
@@ -340,7 +545,7 @@ def publish_vakio(command: dict[str, Any]) -> tuple[str, str]:
         raise RuntimeError("MQTT is not available")
     allowed: dict[str, set[str]] = {
         "state": {"on", "off"},
-        "workmode": {"inflow", "inflow_max", "recuperator", "winter", "outflow", "outflow_max"},
+        "workmode": {"inflow", "inflow_max", "recuperator", "winter", "outflow", "outflow_max", "night"},
         "speed": {str(value) for value in range(1, 8)},
     }
     key = str(command.get("command", ""))
@@ -378,6 +583,18 @@ def snapshot() -> dict[str, Any]:
         control_enabled=CONTROL_ENABLED,
         larnitech_url=LARNITECH_URL,
         vakio_topic=VAKIO_TOPIC,
+        scenario_control={
+            "enabled": LARNITECH_SCENARIO_CONTROL_ENABLED,
+            "cooldown_seconds": LARNITECH_SCENARIO_COOLDOWN_SECONDS,
+            "scenarios": [
+                {
+                    "addr": addr,
+                    **details,
+                    "allowed": addr in LARNITECH_SCENARIO_ALLOWLIST,
+                }
+                for addr, details in SCENARIO_REGISTRY.items()
+            ],
+        },
     )
     if not LARNITECH_API_KEY:
         result["larnitech"]["status"] = "api_key_required"
@@ -405,7 +622,7 @@ class Handler(BaseHTTPRequestHandler):
         self.json_response(200, snapshot())
 
     def do_POST(self) -> None:  # noqa: N802
-        if self.path != "/vakio/command":
+        if self.path not in {"/vakio/command", "/larnitech/scenario"}:
             self.send_error(404)
             return
         try:
@@ -413,8 +630,16 @@ class Handler(BaseHTTPRequestHandler):
             if length <= 0 or length > 1024:
                 raise ValueError("Invalid request size")
             command = json.loads(self.rfile.read(length))
-            topic, value = publish_vakio(command)
-            self.json_response(200, {"confirmed": True, "topic": topic, "value": value})
+            if not isinstance(command, dict):
+                raise ValueError("Request body must be an object")
+            if self.path == "/vakio/command":
+                topic, value = publish_vakio(command)
+                self.json_response(200, {"accepted": True, "confirmed": True, "topic": topic, "value": value})
+                return
+            if set(command) != {"addr", "request_id"}:
+                raise ValueError("Only addr and request_id are accepted")
+            result = trigger_larnitech_scenario(str(command["addr"]), str(command["request_id"]))
+            self.json_response(200, result)
         except PermissionError as exc:
             self.json_response(403, {"error": str(exc)})
         except (ValueError, json.JSONDecodeError) as exc:

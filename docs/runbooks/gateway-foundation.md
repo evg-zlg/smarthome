@@ -22,9 +22,13 @@ curl --fail --silent http://127.0.0.1/gateway/map | \
   }}'
 ```
 
-Нормальное состояние допускает `VAKIO: waiting`, пока устройство не передаёт
-MQTT-телеметрию. `MQTT: online` при этом подтверждает доступность самого брокера.
-`control_enabled` должен оставаться `false`, а `observed.read_only` — `true`.
+Нормальное состояние текущего контура: `MQTT: online`, `VAKIO: online`,
+`control_enabled=true` для ручных команд VAKIO и `observed.read_only=true` для
+карты наблюдения. Управление Larnitech независимо: `scenario_control.enabled`
+должно быть `true`, а `allowed=true` — только у семи исследованных адресов
+`315:246`, `315:250`, `407:246`, `407:247`, `407:248`, `456:46`, `456:47`.
+Это состояние разрешает ручной запуск через панель, но само по себе не запускает
+ни один сценарий.
 
 В объекте `larnitech` нормальное соединение имеет `status: online`, адрес
 `315:36` в `subscribed_addrs` и актуальный `heartbeat_at`. Поле
@@ -102,6 +106,30 @@ sudo mosquitto_sub -h 127.0.0.1 -u gateway -P '<пароль>' -t 'vakio/#' -v
 телеметрии и с последующим ответом прибора. Gateway подписывается с MQTT v5
 `noLocal`, чтобы не принять собственную публикацию за подтверждение.
 
+## Сценарии Larnitech
+
+Перед включением прочитать
+[инвентаризацию сценариев](../inventory/larnitech-scenarios.md). Для полного
+запрета достаточно любого из двух условий в `/etc/smarthome-gateway/gateway.env`:
+
+```text
+LARNITECH_SCENARIO_CONTROL_ENABLED=false
+LARNITECH_SCENARIO_ALLOWLIST=
+```
+
+После изменения выполнить restart gateway и проверить карту:
+
+```bash
+curl --fail --silent http://127.0.0.1/gateway/map | \
+  jq '.scenario_control | {enabled, cooldown_seconds,
+    allowed: [.scenarios[] | select(.allowed) | .addr]}'
+```
+
+Включать можно только точные адреса из встроенного реестра. Нельзя добавлять
+неисследованный адрес «для проверки»: сервис завершится при неизвестном адресе.
+Один физический тест выполняется только при наблюдении на объекте и готовности
+остановить шторы/свет/кондиционер штатным способом.
+
 ## Локальный backup конфигурации
 
 Таймер ежедневно создаёт архив несекретной конфигурации в
@@ -129,8 +157,8 @@ systemd-analyze cat-config systemd/system.conf | grep Watchdog
 
 ## Безопасная остановка каркаса
 
-Каркас не управляет оборудованием. Его можно остановить без остановки MQTT и
-Nginx:
+Остановка gateway убирает управление VAKIO и сценариями Larnitech, но не
+останавливает MQTT и Nginx:
 
 ```bash
 sudo systemctl disable --now smarthome-gateway.service
