@@ -48,6 +48,11 @@ rfc: ../rfc/larnitech-vakio-raspberry-pi.md
 - `GET http://127.0.0.1/gateway/healthz` возвращает актуальную карту Larnitech,
   состояние MQTT/VAKIO, отдельные признаки управления VAKIO и сценариями.
 - Анонимная MQTT-публикация завершается `Connection Refused: not authorised`.
+- VAKIO показывает MQTT `Онлайн`; gateway получает retained-состояния
+  `state=off`, `workmode=recuperator`, `speed=1`.
+- Панель показывает состояние, режим и скорость VAKIO и позволяет вручную
+  отправить только `state=on` или `state=off`. Команда считается выполненной
+  только после ответной публикации VAKIO; `CONTROL_ENABLED=true`.
 - После обновления и перезагрузки ошибочных systemd units нет.
 - Список ожидающих APT-обновлений пуст.
 - NTP синхронизирован; системный часовой пояс — `Asia/Yekaterinburg` (UTC+5).
