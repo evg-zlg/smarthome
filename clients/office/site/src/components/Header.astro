@@ -1,0 +1,7 @@
+---
+const { light = false } = Astro.props;
+const path = Astro.url.pathname;
+const links = [['/solutions/','Решения'],['/about/','Подход'],['/solutions/lux-2-room/','Как работает'],['/contacts/','Контакты']];
+---
+<header class:list={['site-header',{'header-light':light}]}><a class="brand" href="/" aria-label="evoHome — главная" aria-current={path==='/'?'page':undefined}>evo<span>Home</span></a><nav aria-label="Основная навигация">{links.map(([href,label])=><a class:list={{active:path===href}} href={href} aria-current={path===href?'page':undefined}>{label}</a>)}</nav><a class="header-contact" href="/contacts/" aria-current={path==='/contacts/'?'page':undefined}>Обсудить проект <i class="ph ph-arrow-up-right"></i></a><button class="menu-toggle" type="button" aria-label="Открыть меню" aria-expanded="false"><i class="ph ph-list"></i></button></header>
+<script>const t=document.querySelector('.menu-toggle'),n=document.querySelector('.site-header nav');t?.addEventListener('click',()=>{const o=t.getAttribute('aria-expanded')==='true';t.setAttribute('aria-expanded',String(!o));n?.classList.toggle('open',!o)});</script>
