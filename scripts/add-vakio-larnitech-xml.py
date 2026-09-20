@@ -3,22 +3,23 @@
 from __future__ import annotations
 
 import argparse
+import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
 AREA_ADDR = "65536262"
 POWER_ADDR = "407:220"
 MODES = {
-    "inflow": ("407:221", "Режим · Приток"),
-    "inflow_max": ("407:222", "Режим · Приток MAX"),
-    "recuperator": ("407:223", "Режим · Рекуперация лето"),
-    "winter": ("407:224", "Режим · Рекуперация зима"),
-    "outflow": ("407:225", "Режим · Вытяжка"),
-    "outflow_max": ("407:226", "Режим · Вытяжка MAX"),
-    "night": ("407:227", "Режим · Ночной"),
+    "inflow": ("407:221", "VAKIO · Режим · Приток"),
+    "inflow_max": ("407:222", "VAKIO · Режим · Приток MAX"),
+    "recuperator": ("407:223", "VAKIO · Режим · Рекуперация лето"),
+    "winter": ("407:224", "VAKIO · Режим · Рекуперация зима"),
+    "outflow": ("407:225", "VAKIO · Режим · Вытяжка"),
+    "outflow_max": ("407:226", "VAKIO · Режим · Вытяжка MAX"),
+    "night": ("407:227", "VAKIO · Режим · Ночной"),
 }
 SPEEDS = {
-    str(speed): (f"407:{227 + speed}", f"Скорость · {speed}")
+    str(speed): (f"407:{227 + speed}", f"VAKIO · Скорость · {speed}")
     for speed in range(1, 8)
 }
 
@@ -59,12 +60,37 @@ def add_vakio_area(xml: str) -> str:
     return result
 
 
+def rename_vakio_items(xml: str) -> str:
+    """Prefix every existing VAKIO selector without changing its address."""
+    root = ET.fromstring(xml)
+    area = next((item for item in root.findall("area") if item.get("name") == "VAKIO"), None)
+    if area is None:
+        raise ValueError("VAKIO area does not exist")
+    expected = {POWER_ADDR: "VAKIO · Питание"}
+    expected.update({addr: name for addr, name in MODES.values()})
+    expected.update({addr: name for addr, name in SPEEDS.values()})
+    by_addr = {item.get("addr"): item for item in area.findall("item")}
+    missing = sorted(set(expected) - set(by_addr))
+    if missing:
+        raise ValueError(f"Missing VAKIO addresses: {', '.join(missing)}")
+    result = xml
+    for addr, name in expected.items():
+        pattern = rf'(<item\b(?=[^>]*\baddr="{re.escape(addr)}")[^>]*\bname=")[^"]*(")'
+        result, count = re.subn(pattern, rf'\g<1>{name}\g<2>', result, count=1)
+        if count != 1:
+            raise ValueError(f"Could not rename VAKIO address: {addr}")
+    ET.fromstring(result)
+    return result
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("input", type=Path)
     parser.add_argument("output", type=Path)
+    parser.add_argument("--rename-existing", action="store_true")
     args = parser.parse_args()
-    args.output.write_text(add_vakio_area(args.input.read_text()), encoding="utf-8")
+    transform = rename_vakio_items if args.rename_existing else add_vakio_area
+    args.output.write_text(transform(args.input.read_text()), encoding="utf-8")
 
 
 if __name__ == "__main__":
