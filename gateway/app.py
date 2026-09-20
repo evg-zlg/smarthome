@@ -7,6 +7,7 @@ import logging
 import os
 import threading
 import time
+from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
@@ -31,6 +32,7 @@ LOG = logging.getLogger("smarthome-gateway")
 lock = threading.Lock()
 state: dict[str, Any] = {
     "started_at": time.time(),
+    "mqtt": {"status": "waiting", "updated_at": None, "error": None},
     "larnitech": {"status": "not_configured", "updated_at": None, "devices": [], "error": None},
     "vakio": {"status": "waiting", "updated_at": None, "topics": {}, "error": None},
 }
@@ -39,6 +41,101 @@ mqtt_client: mqtt.Client | None = None
 
 def utc_timestamp() -> str:
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+
+def age_seconds(timestamp: str | None) -> int | None:
+    if not timestamp:
+        return None
+    try:
+        updated = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+        return max(0, int((datetime.now(timezone.utc) - updated).total_seconds()))
+    except (TypeError, ValueError):
+        return None
+
+
+def entity_by_addr(devices: list[dict[str, Any]], addr: str) -> dict[str, Any] | None:
+    return next((device for device in devices if device.get("addr") == addr), None)
+
+
+def entity_view(devices: list[dict[str, Any]], addr: str, label: str, unit: str | None = None) -> dict[str, Any]:
+    device = entity_by_addr(devices, addr) or {}
+    status = device.get("status") if isinstance(device.get("status"), dict) else {}
+    return {
+        "addr": addr,
+        "label": label,
+        "type": device.get("type"),
+        "value": status.get("state"),
+        "unit": unit,
+        "available": bool(device),
+        "status": status,
+    }
+
+
+def observed_map(result: dict[str, Any]) -> dict[str, Any]:
+    """Build a small, stable read-only view from noisy API2 channels."""
+    larnitech = result["larnitech"]
+    devices = larnitech.get("devices", [])
+    if not isinstance(devices, list):
+        devices = []
+    larnitech_age = age_seconds(larnitech.get("updated_at"))
+    mqtt_age = age_seconds(result["mqtt"].get("updated_at"))
+    vakio_age = age_seconds(result["vakio"].get("updated_at"))
+
+    modules = [
+        {"id": "407", "model": "MF-14.C", "role": "Основной контроллер", "channels": 27},
+        {"id": "315", "model": "CW-CO2.C", "role": "Климат и движение", "channels": 9},
+        {"id": "456", "model": "DW-RS485", "role": "Кондиционер / Modbus", "channels": 205},
+        {"id": "500", "model": "DW-RGB03.B", "role": "RGB-подсветка", "channels": 12},
+    ]
+    present_ids = {str(device.get("addr", "")).split(":", 1)[0] for device in devices}
+    for module in modules:
+        module["status"] = "online" if module["id"] in present_ids else ("unknown" if not devices else "missing")
+
+    climate = [
+        entity_view(devices, "315:36", "CO₂", "ppm"),
+        entity_view(devices, "315:32", "Температура", "°C"),
+        entity_view(devices, "315:33", "Влажность", "%"),
+    ]
+    lights = [entity_view(devices, addr, label) for addr, label in (
+        ("407:8", "Рабочая зона — левая"), ("407:9", "Рабочая зона — правая"),
+        ("407:250", "Переговорная зона"),
+    )]
+    curtains = [entity_view(devices, addr, label) for addr, label in (
+        ("407:3", "Шторы переговорной"), ("407:5", "Шторы 1"),
+    )]
+    ac = entity_view(devices, "456:249", "Кондиционер AC1")
+    ac["connected"] = (entity_by_addr(devices, "456:237") or {}).get("status", {}).get("state") == "opened"
+    ac["error"] = (entity_by_addr(devices, "456:230") or {}).get("status", {}).get("state")
+    ac["alarm"] = (entity_by_addr(devices, "456:231") or {}).get("status", {}).get("state")
+    ac["temperatures"] = {
+        "indoor": entity_view(devices, "456:233", "В помещении", "°C")["value"],
+        "supply": entity_view(devices, "456:235", "Воздух внутри", "°C")["value"],
+    }
+
+    errors: list[dict[str, str]] = []
+    for source in ("larnitech", "mqtt", "vakio"):
+        item = result[source]
+        if item.get("error"):
+            errors.append({"source": source, "message": str(item["error"])})
+    if larnitech_age is not None and larnitech_age > LARNITECH_POLL_SECONDS * 3:
+        errors.append({"source": "larnitech", "message": "Данные Larnitech устарели"})
+
+    return {
+        "services": {
+            "pi": {"status": "online", "updated_at": utc_timestamp(), "age_seconds": 0},
+            "larnitech": {"status": larnitech["status"], "updated_at": larnitech.get("updated_at"), "age_seconds": larnitech_age},
+            "mqtt": {**result["mqtt"], "age_seconds": mqtt_age},
+            "vakio": {"status": result["vakio"]["status"], "updated_at": result["vakio"].get("updated_at"), "age_seconds": vakio_age},
+        },
+        "physical_modules": modules,
+        "api_channels": {"total": len(devices), "note": "Адресуемые каналы, не физические устройства"},
+        "climate": climate,
+        "air_conditioner": ac,
+        "lights": lights,
+        "curtains": curtains,
+        "errors": errors,
+        "read_only": True,
+    }
 
 
 def larnitech_request() -> dict[str, Any]:
@@ -74,13 +171,21 @@ def larnitech_worker() -> None:
 
 def on_connect(client: mqtt.Client, userdata: object, flags: dict[str, Any], reason_code: Any, properties: Any = None) -> None:
     del userdata, flags, properties
-    if int(reason_code) != 0:
+    # Paho v2 ReasonCode compares to an integer but cannot be cast with int().
+    if reason_code != 0:
         with lock:
-            state["vakio"].update(status="error", error=f"MQTT connect: {reason_code}")
+            state["mqtt"].update(status="error", updated_at=utc_timestamp(), error=f"MQTT connect: {reason_code}")
         return
     client.subscribe(f"{VAKIO_TOPIC}/#")
     with lock:
-        state["vakio"].update(status="connected", error=None)
+        state["mqtt"].update(status="online", updated_at=utc_timestamp(), error=None)
+        state["vakio"].update(status="waiting", error=None)
+
+
+def on_disconnect(client: mqtt.Client, userdata: object, disconnect_flags: Any, reason_code: Any, properties: Any = None) -> None:
+    del client, userdata, disconnect_flags, properties
+    with lock:
+        state["mqtt"].update(status="offline", updated_at=utc_timestamp(), error=f"MQTT disconnected: {reason_code}")
 
 
 def on_message(client: mqtt.Client, userdata: object, message: mqtt.MQTTMessage) -> None:
@@ -96,6 +201,7 @@ def start_mqtt() -> mqtt.Client:
     if MQTT_PASSWORD:
         client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
     client.on_connect = on_connect
+    client.on_disconnect = on_disconnect
     client.on_message = on_message
     client.connect_async(MQTT_HOST, MQTT_PORT, keepalive=30)
     client.loop_start()
@@ -127,7 +233,7 @@ def snapshot() -> dict[str, Any]:
     with lock:
         result = json.loads(json.dumps(state))
     result.update(
-        status="online" if result["vakio"]["status"] in {"connected", "online"} else "degraded",
+        status="online" if result["larnitech"]["status"] == "online" and result["mqtt"]["status"] == "online" else "degraded",
         control_enabled=CONTROL_ENABLED,
         larnitech_url=LARNITECH_URL,
         vakio_topic=VAKIO_TOPIC,
@@ -136,6 +242,7 @@ def snapshot() -> dict[str, Any]:
         result["larnitech"]["status"] = "api_key_required"
     elif result["larnitech"]["status"] == "not_configured":
         result["larnitech"]["status"] = "waiting"
+    result["observed"] = observed_map(result)
     return result
 
 
