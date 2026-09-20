@@ -45,7 +45,7 @@ class FakeResult:
 class FakeClient:
     def publish(self, topic, value, qos):
         self.message = (topic, value, qos)
-        message = type("Message", (), {"topic": topic, "payload": value.encode()})()
+        message = SimpleNamespace(topic=topic, payload=value.encode())
         threading.Timer(0.01, app.on_message, args=(self, None, message)).start()
         return FakeResult()
 
@@ -91,6 +91,13 @@ class GatewayTests(unittest.TestCase):
         client = SimpleNamespace(subscribe=lambda topic, options=None: None)
         app.on_connect(client, None, {}, SuccessReasonCode())
         self.assertEqual(app.state["mqtt"]["status"], "online")
+        self.assertEqual(subscription["topic"], "vakio/#")
+        self.assertTrue(subscription["options"].noLocal)
+
+    def test_rejects_command_without_fresh_telemetry(self):
+        app.last_device_message_monotonic = None
+        with self.assertRaisesRegex(RuntimeError, "telemetry is not fresh"):
+            app.publish_vakio({"command": "state", "value": "on"})
 
     def test_observed_map_separates_physical_modules_and_api_channels(self):
         inventory = json.loads(
