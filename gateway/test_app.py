@@ -241,6 +241,20 @@ class GatewayTests(unittest.TestCase):
             app.VAKIO_LARNITECH_BRIDGE_ENABLED = original_bridge
             app.CONTROL_ENABLED = original_control
 
+    def test_larnitech_vakio_state_uses_virtual_selectors(self):
+        devices = [
+            {"addr": app.VAKIO_LARNITECH_POWER_ADDR, "status": {"state": "off"}},
+            {"addr": app.VAKIO_LARNITECH_MODE_ADDRS["night"], "status": {"state": "on"}},
+            {"addr": app.VAKIO_LARNITECH_SPEED_ADDRS["2"], "status": {"state": "on"}},
+        ]
+        self.assertEqual(app.larnitech_vakio_state(devices), {
+            "available": True,
+            "power": "off",
+            "mode": "night",
+            "speed": "2",
+            "source": "larnitech",
+        })
+
     def test_observed_map_separates_physical_modules_and_api_channels(self):
         inventory = json.loads(
             (Path(__file__).parents[1] / "docs/inventory/larnitech-entities.json").read_text()
