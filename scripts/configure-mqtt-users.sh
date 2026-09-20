@@ -14,7 +14,7 @@ chmod 0640 /etc/mosquitto/passwd
 
 gateway_tmp=$(mktemp)
 trap 'rm -f "${gateway_tmp}"' EXIT
-printf 'MQTT_HOST=127.0.0.1\nMQTT_USERNAME=gateway\nMQTT_PASSWORD=%s\nVAKIO_TOPIC=vakio\nCONTROL_ENABLED=false\n' "${gateway_password}" >"${gateway_tmp}"
+printf 'MQTT_HOST=127.0.0.1\nMQTT_USERNAME=gateway\nMQTT_PASSWORD=%s\nVAKIO_TOPIC=vakio\nCONTROL_ENABLED=true\n' "${gateway_password}" >"${gateway_tmp}"
 install -o root -g smarthome-gateway -m 0640 "${gateway_tmp}" /etc/smarthome-gateway/gateway.env
 
 /usr/local/sbin/configure-vakio-mqtt

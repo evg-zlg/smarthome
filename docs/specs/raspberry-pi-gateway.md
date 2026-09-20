@@ -32,8 +32,9 @@ rfc: ../rfc/larnitech-vakio-raspberry-pi.md
 ## Сетевые границы
 
 - SSH слушает TCP `22` на LAN-интерфейсах.
-- Nginx слушает TCP `80` на IPv4 и IPv6; опубликованы только статическая
-  заглушка, `/healthz` и proxy `/gateway/healthz`.
+- Nginx слушает TCP `80` на IPv4 и IPv6; опубликованы панель, `/healthz`,
+  read-only proxy `/gateway/healthz`, `/gateway/map` и POST-маршрут
+  `/gateway/vakio/command`.
 - Каркас gateway слушает только `127.0.0.1:8080`.
 - Mosquitto слушает защищённый `127.0.0.1:1883` для gateway и
   анонимный `192.168.1.183:1883` для VAKIO.
@@ -49,13 +50,14 @@ nftables до IP `.164` и ACL до `vakio/#`.
 ## Проверенное поведение
 
 - `GET http://127.0.0.1/healthz` возвращает `200` и `ok`.
-- `GET http://127.0.0.1/gateway/healthz` возвращает безопасное состояние
-  `waiting_for_configuration`, `control_enabled=false`.
+- `GET http://127.0.0.1/gateway/healthz` возвращает состояние интеграций и
+  `control_enabled=true`.
 - Анонимная MQTT-публикация завершается `Connection Refused: not authorised`.
 - VAKIO показывает MQTT `Онлайн`; gateway получает retained-состояния
   `state=off`, `workmode=recuperator`, `speed=1`.
-- Идемпотентная команда `state=off` подтверждена ответной
-  публикацией VAKIO; после теста `CONTROL_ENABLED=false`.
+- Панель показывает состояние, режим и скорость VAKIO и позволяет вручную
+  отправить только `state=on` или `state=off`. Команда считается выполненной
+  только после ответной публикации VAKIO; `CONTROL_ENABLED=true`.
 - После обновления и перезагрузки ошибочных systemd units нет.
 - Список ожидающих APT-обновлений пуст.
 - NTP синхронизирован; системный часовой пояс — `Asia/Yekaterinburg` (UTC+5).
