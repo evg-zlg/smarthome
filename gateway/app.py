@@ -167,7 +167,10 @@ state: dict[str, Any] = {
         "last_event_at": None, "subscribed_addrs": [], "reconnects": 0,
         "devices": [], "error": None,
     },
-    "vakio": {"status": "waiting", "updated_at": None, "topics": {}, "error": None},
+    "vakio": {
+        "status": "waiting", "updated_at": None, "topics": {},
+        "confirmed_topics": {}, "commanded_topics": {}, "error": None,
+    },
 }
 mqtt_client: mqtt.Client | None = None
 last_device_message_monotonic: float | None = None
@@ -719,6 +722,10 @@ def on_message(client: mqtt.Client, userdata: object, message: mqtt.MQTTMessage)
             last_device_message_monotonic = time.monotonic()
             fresh_topic_versions[message.topic] = fresh_topic_versions.get(message.topic, 0) + 1
             fresh_topic_values[message.topic] = (value, last_device_message_monotonic)
+            state["vakio"]["confirmed_topics"][message.topic] = {
+                "value": value, "updated_at": utc_timestamp(), "source": "device",
+            }
+            state["vakio"]["commanded_topics"].pop(message.topic, None)
         state["vakio"]["topics"][message.topic] = value
         state["vakio"].update(updated_at=utc_timestamp())
         if not retained:
@@ -830,6 +837,11 @@ def publish_vakio(command: dict[str, Any]) -> tuple[str, str]:
                     if retained_result.rc != mqtt.MQTT_ERR_SUCCESS:
                         raise RuntimeError(f"MQTT off-state persistence failed: {retained_result.rc}")
                     state["vakio"]["topics"][topic] = value
+                    state["vakio"]["confirmed_topics"].pop(topic, None)
+                    state["vakio"]["commanded_topics"][topic] = {
+                        "value": value, "updated_at": utc_timestamp(),
+                        "source": "accepted_without_device_confirmation",
+                    }
                     state["vakio"].update(updated_at=utc_timestamp(), error=None)
                     break
                 raise RuntimeError("VAKIO did not confirm the command")
