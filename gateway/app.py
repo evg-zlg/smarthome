@@ -520,19 +520,13 @@ def on_message(client: mqtt.Client, userdata: object, message: mqtt.MQTTMessage)
 
 
 def start_mqtt() -> mqtt.Client:
-    client = mqtt.Client(
-        mqtt.CallbackAPIVersion.VERSION2,
-        client_id="smarthome-gateway",
-        protocol=mqtt.MQTTv5,
-    )
+    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id="smarthome-gateway")
     if MQTT_PASSWORD:
         client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
     client.on_connect = on_connect
     client.on_disconnect = on_disconnect
     client.on_message = on_message
-    # The broker is a required local systemd dependency, so a synchronous
-    # initial connect is deterministic and lets systemd retry on failure.
-    client.connect(MQTT_HOST, MQTT_PORT, keepalive=30)
+    client.connect_async(MQTT_HOST, MQTT_PORT, keepalive=30)
     client.loop_start()
     return client
 
@@ -544,16 +538,8 @@ def publish_vakio(command: dict[str, Any]) -> tuple[str, str]:
     if mqtt_client is None:
         raise RuntimeError("MQTT is not available")
     allowed: dict[str, set[str]] = {
-        "state": {"off", "on"},
-        "workmode": {
-            "recuperator",
-            "winter",
-            "inflow",
-            "inflow_max",
-            "outflow",
-            "outflow_max",
-            "night",
-        },
+        "state": {"on", "off"},
+        "workmode": {"inflow", "inflow_max", "recuperator", "winter", "outflow", "outflow_max"},
         "speed": {str(value) for value in range(1, 8)},
     }
     key = str(command.get("command", ""))
@@ -564,13 +550,11 @@ def publish_vakio(command: dict[str, Any]) -> tuple[str, str]:
         time.monotonic() - last_device_message_monotonic > VAKIO_TELEMETRY_MAX_AGE
     ):
         raise RuntimeError("VAKIO telemetry is not fresh")
-
     topic = f"{VAKIO_TOPIC}/{key}"
-    payload = value
     deadline = time.monotonic() + VAKIO_CONFIRM_TIMEOUT
     with confirmation:
-        pending_confirmation = (topic, payload)
-        result = mqtt_client.publish(topic, payload, qos=1)
+        pending_confirmation = (topic, value)
+        result = mqtt_client.publish(topic, value, qos=1)
         if result.rc != mqtt.MQTT_ERR_SUCCESS:
             pending_confirmation = None
             raise RuntimeError(f"MQTT publish failed: {result.rc}")
@@ -580,9 +564,9 @@ def publish_vakio(command: dict[str, Any]) -> tuple[str, str]:
                 pending_confirmation = None
                 raise RuntimeError("VAKIO did not confirm the command")
             confirmation.wait(remaining)
-            if state["vakio"]["topics"].get(topic) == payload:
+            if state["vakio"]["topics"].get(topic) == value:
                 pending_confirmation = None
-    return topic, payload
+    return topic, value
 
 
 def snapshot() -> dict[str, Any]:
