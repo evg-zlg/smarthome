@@ -1,0 +1,8 @@
+user vakio
+topic readwrite vakio/#
+
+user gateway
+topic read vakio/#
+topic write vakio/state
+topic write vakio/workmode
+topic write vakio/speed

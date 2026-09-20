@@ -1,0 +1,68 @@
+schema_version: 1
+site: office
+network:
+  ipv4_cidr: 192.168.1.0/24
+  gateway: 192.168.1.1
+  discovery_date: 2026-09-20
+
+devices:
+  - id: keenetic-router
+    name: Keenetic
+    role: router
+    status: confirmed
+    ipv4: 192.168.1.1
+    mac: "50:ff:20:c8:c0:c7"
+    services: [dns/53, http/80, https/443]
+  - id: vakio-base-smart
+    name: VAKIO Base Smart
+    role: recuperator
+    status: confirmed
+    ipv4: 192.168.1.164
+    mac: "58:bf:25:13:f7:3c"
+    services: [http/80]
+    integrations:
+      mqtt_broker: 192.168.1.183
+      mqtt_port: 1883
+      mqtt_topic: vakio
+      mqtt_status: offline
+    functions: [ventilation, recuperation, inflow, outflow]
+  - id: raspberry-pi-gateway
+    name: rasppi3b
+    role: integration-gateway
+    status: confirmed
+    model: Raspberry Pi 3 Model B Plus Rev 1.4
+    ipv4: 192.168.1.183
+    mac: "b8:27:eb:aa:93:b7"
+    reserve_ethernet_ipv4: 192.168.1.166
+    services: [ssh/22, http/80, mqtt/1883, gateway/127.0.0.1:8080]
+    functions: [system-map, mqtt-broker, larnitech-adapter, vakio-adapter]
+  - id: larnitech-mf14c
+    name: Larnitech Metaforsa MF-14.C
+    role: automation-controller
+    status: confirmed
+    ipv4: 192.168.1.185
+    mac: "00:00:7d:40:2e:89"
+    services: [ssh/22, http/80, api2-websocket/2041]
+    functions: [sensors, lighting, curtains, automation]
+    inventory_status: api_key_required
+  - id: unknown-162
+    name: Неопознанное устройство 162
+    role: unknown
+    status: requires_identification
+    ipv4: 192.168.1.162
+    mac: "60:3d:61:da:e7:b2"
+    services: []
+  - id: unknown-175
+    name: Неопознанное устройство 175
+    role: unknown
+    status: requires_identification
+    ipv4: 192.168.1.175
+    mac: "3e:66:87:7a:61:85"
+    services: []
+
+observed_but_offline:
+  - {ipv4: 192.168.1.163, mac: "de:16:c0:6d:21:b2"}
+  - {ipv4: 192.168.1.174, mac: "60:3d:61:7f:c8:fe"}
+  - ipv4: 192.168.1.188
+    mac: "1c:ce:51:89:f6:08"
+    notes: Прежний MQTT target VAKIO; не отвечает.

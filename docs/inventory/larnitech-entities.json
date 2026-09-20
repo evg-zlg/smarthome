@@ -1,0 +1,3016 @@
+{
+  "schema_version": 1,
+  "source": "Larnitech API2 get-devices detailed",
+  "controller": "192.168.1.185",
+  "entity_count": 263,
+  "entities": [
+    {
+      "addr": "315:11",
+      "type": "ir-transmitter",
+      "name": "IR transmitter",
+      "area": "EvoHome",
+      "status": {
+        "state": "undefined"
+      }
+    },
+    {
+      "addr": "315:30",
+      "type": "motion-sensor",
+      "name": "Motion",
+      "area": "EvoHome",
+      "status": {
+        "state": 14.61
+      }
+    },
+    {
+      "addr": "315:31",
+      "type": "illumination-sensor",
+      "name": "Illumination",
+      "area": "EvoHome",
+      "status": {
+        "state": 31.0
+      }
+    },
+    {
+      "addr": "315:32",
+      "type": "temperature-sensor",
+      "name": "Temperature",
+      "area": "EvoHome",
+      "status": {
+        "state": 24.7
+      }
+    },
+    {
+      "addr": "315:33",
+      "type": "humidity-sensor",
+      "name": "Humidity",
+      "area": "EvoHome",
+      "status": {
+        "state": 36.28
+      }
+    },
+    {
+      "addr": "315:36",
+      "type": "co2-sensor",
+      "name": "CO2",
+      "area": "EvoHome",
+      "status": {
+        "state": 847
+      }
+    },
+    {
+      "addr": "315:98",
+      "type": "temperature-sensor",
+      "name": "Temperature",
+      "area": "Setup",
+      "status": {
+        "state": 29.77
+      }
+    },
+    {
+      "addr": "315:246",
+      "type": "script",
+      "name": "ушел",
+      "area": "EvoHome",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "315:250",
+      "type": "script",
+      "name": "Доброе утро",
+      "area": "EvoHome",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "407:1",
+      "type": "lamp",
+      "name": "Цепи управления",
+      "area": "Щит",
+      "sub-type": "closing-switch",
+      "status": {
+        "state": "on",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "407:2",
+      "type": "lamp",
+      "name": "БП LED",
+      "area": "Щит",
+      "sub-type": "closing-switch",
+      "status": {
+        "state": "on",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "407:3",
+      "type": "jalousie",
+      "name": "Шторы переговорная",
+      "area": "EvoHome",
+      "sub-type": "120",
+      "status": {
+        "state": "opened",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "407:5",
+      "type": "jalousie",
+      "name": "Шторы 1",
+      "area": "EvoHome",
+      "sub-type": "120",
+      "status": {
+        "state": "opened",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "407:7",
+      "type": "valve-heating",
+      "name": "Радиатор",
+      "area": "Setup",
+      "status": {
+        "state": "off"
+      },
+      "automations": [
+        "Eco",
+        "Comfort",
+        "Hot"
+      ]
+    },
+    {
+      "addr": "407:8",
+      "type": "lamp",
+      "name": "Рабочая зона Л",
+      "area": "EvoHome",
+      "status": {
+        "state": "on",
+        "auto-state": true
+      },
+      "linked": [
+        {
+          "addr": "407:15",
+          "click": "2"
+        },
+        {
+          "addr": "407:16",
+          "click": "3",
+          "dbl-click": "1"
+        },
+        {
+          "addr": "407:20",
+          "click": "1"
+        }
+      ]
+    },
+    {
+      "addr": "407:9",
+      "type": "lamp",
+      "name": "Рабочая зона П",
+      "area": "EvoHome",
+      "status": {
+        "state": "on",
+        "auto-state": true
+      },
+      "linked": [
+        {
+          "addr": "407:15",
+          "click": "2"
+        },
+        {
+          "addr": "407:16",
+          "click": "3",
+          "dbl-click": "1"
+        },
+        {
+          "addr": "407:20",
+          "click": "1"
+        }
+      ]
+    },
+    {
+      "addr": "407:11",
+      "type": "dimmer-lamp",
+      "name": "Dimmer",
+      "area": "EvoHome",
+      "status": {
+        "state": "on",
+        "auto-state": true,
+        "level": 100.0
+      },
+      "linked": [
+        {
+          "addr": "407:15",
+          "click": "2",
+          "long-click": "8"
+        },
+        {
+          "addr": "407:16",
+          "click": "3",
+          "long-click": "7",
+          "tripple-click": "1"
+        },
+        {
+          "addr": "407:20",
+          "click": "1",
+          "value": "0xFA14"
+        }
+      ]
+    },
+    {
+      "addr": "407:12",
+      "type": "dimmer-lamp",
+      "name": "Dimmer",
+      "area": "EvoHome",
+      "status": {
+        "state": "on",
+        "auto-state": true,
+        "level": 100.0
+      },
+      "linked": [
+        {
+          "addr": "407:15",
+          "click": "2",
+          "long-click": "8"
+        },
+        {
+          "addr": "407:16",
+          "click": "3",
+          "long-click": "7",
+          "tripple-click": "1"
+        },
+        {
+          "addr": "407:20",
+          "click": "1"
+        }
+      ]
+    },
+    {
+      "addr": "407:13",
+      "type": "dimmer-lamp",
+      "name": "Dimmer",
+      "area": "EvoHome",
+      "status": {
+        "state": "on",
+        "auto-state": true,
+        "level": 100.0
+      },
+      "linked": [
+        {
+          "addr": "407:15",
+          "click": "2",
+          "long-click": "8"
+        },
+        {
+          "addr": "407:16",
+          "click": "3",
+          "long-click": "7",
+          "tripple-click": "1"
+        },
+        {
+          "addr": "407:20",
+          "click": "1"
+        }
+      ]
+    },
+    {
+      "addr": "407:14",
+      "type": "dimmer-lamp",
+      "name": "Dimmer",
+      "area": "EvoHome",
+      "status": {
+        "state": "on",
+        "auto-state": true,
+        "level": 100.0
+      },
+      "linked": [
+        {
+          "addr": "407:15",
+          "click": "2",
+          "long-click": "8"
+        },
+        {
+          "addr": "407:16",
+          "click": "3",
+          "long-click": "7",
+          "tripple-click": "1"
+        },
+        {
+          "addr": "407:20",
+          "click": "1"
+        }
+      ]
+    },
+    {
+      "addr": "407:15",
+      "type": "switch",
+      "name": "Switch 1",
+      "area": "Setup",
+      "status": {
+        "state": "undefined"
+      },
+      "linked": [
+        {
+          "addr": "407:8",
+          "click": "2"
+        },
+        {
+          "addr": "407:9",
+          "click": "2"
+        },
+        {
+          "addr": "407:11",
+          "click": "2",
+          "long-click": "8"
+        },
+        {
+          "addr": "407:12",
+          "click": "2",
+          "long-click": "8"
+        },
+        {
+          "addr": "407:13",
+          "click": "2",
+          "long-click": "8"
+        },
+        {
+          "addr": "407:14",
+          "click": "2",
+          "long-click": "8"
+        }
+      ]
+    },
+    {
+      "addr": "407:16",
+      "type": "switch",
+      "name": "Switch 2",
+      "area": "Setup",
+      "status": {
+        "state": "undefined"
+      },
+      "linked": [
+        {
+          "addr": "407:8",
+          "click": "3",
+          "dbl-click": "1"
+        },
+        {
+          "addr": "407:9",
+          "click": "3",
+          "dbl-click": "1"
+        },
+        {
+          "addr": "407:11",
+          "click": "3",
+          "long-click": "7",
+          "tripple-click": "1"
+        },
+        {
+          "addr": "407:12",
+          "click": "3",
+          "long-click": "7",
+          "tripple-click": "1"
+        },
+        {
+          "addr": "407:13",
+          "click": "3",
+          "long-click": "7",
+          "tripple-click": "1"
+        },
+        {
+          "addr": "407:14",
+          "click": "3",
+          "long-click": "7",
+          "tripple-click": "1"
+        }
+      ]
+    },
+    {
+      "addr": "407:17",
+      "type": "switch",
+      "name": "Switch 3",
+      "area": "Setup",
+      "status": {
+        "state": "undefined"
+      },
+      "linked": [
+        {
+          "addr": "500:1",
+          "click": "1"
+        },
+        {
+          "addr": "500:3",
+          "click": "1"
+        },
+        {
+          "addr": "500:5",
+          "click": "1"
+        },
+        {
+          "addr": "500:7",
+          "click": "1"
+        }
+      ]
+    },
+    {
+      "addr": "407:18",
+      "type": "switch",
+      "name": "Switch 4",
+      "area": "Setup",
+      "status": {
+        "state": "undefined"
+      },
+      "linked": [
+        {
+          "addr": "407:246"
+        },
+        {
+          "addr": "407:247"
+        }
+      ]
+    },
+    {
+      "addr": "407:19",
+      "type": "switch",
+      "name": "Switch 5",
+      "area": "Setup",
+      "status": {
+        "state": "undefined"
+      }
+    },
+    {
+      "addr": "407:20",
+      "type": "switch",
+      "name": "Switch 6",
+      "area": "Setup",
+      "status": {
+        "state": "undefined"
+      },
+      "linked": [
+        {
+          "addr": "407:8",
+          "click": "1"
+        },
+        {
+          "addr": "407:9",
+          "click": "1"
+        },
+        {
+          "addr": "407:11",
+          "click": "1",
+          "value": "0xFA14"
+        },
+        {
+          "addr": "407:12",
+          "click": "1"
+        },
+        {
+          "addr": "407:13",
+          "click": "1"
+        },
+        {
+          "addr": "407:14",
+          "click": "1"
+        },
+        {
+          "addr": "500:2",
+          "click": "1"
+        },
+        {
+          "addr": "500:4",
+          "click": "1"
+        },
+        {
+          "addr": "500:6",
+          "click": "1"
+        },
+        {
+          "addr": "500:8",
+          "click": "1"
+        }
+      ]
+    },
+    {
+      "addr": "407:39",
+      "type": "temperature-sensor",
+      "name": "Блок Л",
+      "area": "Щит",
+      "status": {
+        "state": 24.94
+      }
+    },
+    {
+      "addr": "407:40",
+      "type": "temperature-sensor",
+      "name": "Блок П",
+      "area": "Щит",
+      "status": {
+        "state": 26.12
+      }
+    },
+    {
+      "addr": "407:56",
+      "type": "ir-receiver",
+      "name": "IR receiver",
+      "area": "Setup",
+      "status": {
+        "state": "undefined"
+      }
+    },
+    {
+      "addr": "407:90",
+      "type": "current-sensor",
+      "name": "Current",
+      "area": "Setup",
+      "status": {
+        "state": 771
+      }
+    },
+    {
+      "addr": "407:97",
+      "type": "temperature-sensor",
+      "name": "Temperature",
+      "area": "Setup",
+      "status": {
+        "state": 46.53
+      }
+    },
+    {
+      "addr": "407:98",
+      "type": "temperature-sensor",
+      "name": "Temperature",
+      "area": "Setup",
+      "status": {
+        "state": 43.61
+      }
+    },
+    {
+      "addr": "407:246",
+      "type": "script",
+      "name": "я пришел",
+      "area": "EvoHome",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      },
+      "linked": [
+        {
+          "addr": "407:18"
+        }
+      ]
+    },
+    {
+      "addr": "407:247",
+      "type": "script",
+      "name": "я ушел",
+      "area": "EvoHome",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      },
+      "linked": [
+        {
+          "addr": "407:18"
+        }
+      ]
+    },
+    {
+      "addr": "407:248",
+      "type": "script",
+      "name": "Спокойной ночи",
+      "area": "EvoHome",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "407:250",
+      "type": "dimmer-lamp",
+      "name": "Переговорная зона",
+      "area": "EvoHome",
+      "status": {
+        "state": "off",
+        "auto-state": true,
+        "level": 0.0
+      }
+    },
+    {
+      "addr": "456:1",
+      "type": "com-port",
+      "name": "RS485",
+      "area": "Setup",
+      "status": {
+        "state": "undefined"
+      }
+    },
+    {
+      "addr": "456:46",
+      "type": "script",
+      "name": "темпер 1",
+      "area": "EvoHome",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:47",
+      "type": "script",
+      "name": "темпер",
+      "area": "EvoHome",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:48",
+      "type": "lamp",
+      "name": "Сменить адрес",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:49",
+      "type": "virtual",
+      "name": "AC10Код ош.",
+      "area": "Кондер",
+      "sub-type": "text",
+      "status": {
+        "state": ""
+      }
+    },
+    {
+      "addr": "456:50",
+      "type": "door-sensor",
+      "name": "AC10Ошибка",
+      "area": "Кондер",
+      "sub-type": "alarm",
+      "status": {
+        "state": "closed"
+      }
+    },
+    {
+      "addr": "456:51",
+      "type": "temperature-sensor",
+      "name": "AC10Т.внеш.т.",
+      "area": "Кондер",
+      "status": {
+        "state": 0.0
+      }
+    },
+    {
+      "addr": "456:52",
+      "type": "temperature-sensor",
+      "name": "AC10Т.внут.т.",
+      "area": "Кондер",
+      "status": {
+        "state": 0.0
+      }
+    },
+    {
+      "addr": "456:53",
+      "type": "temperature-sensor",
+      "name": "AC10Т.возд.ул",
+      "area": "Кондер",
+      "status": {
+        "state": 0.0
+      }
+    },
+    {
+      "addr": "456:54",
+      "type": "temperature-sensor",
+      "name": "AC10Т.возд.вн",
+      "area": "Кондер",
+      "status": {
+        "state": 0.0
+      }
+    },
+    {
+      "addr": "456:55",
+      "type": "lamp",
+      "name": "AC10Вер.жалюзи",
+      "area": "Кондер",
+      "sub-type": "air-fan",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:56",
+      "type": "door-sensor",
+      "name": "AC10Подкл.",
+      "area": "Кондер",
+      "status": {
+        "state": "closed"
+      }
+    },
+    {
+      "addr": "456:57",
+      "type": "lamp",
+      "name": "AC10Мягкий поток",
+      "area": "Кондер",
+      "sub-type": "lock",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:58",
+      "type": "lamp",
+      "name": "AC10Деж.обогрев",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:59",
+      "type": "lamp",
+      "name": "AC10Антиплесень",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:60",
+      "type": "lamp",
+      "name": "AC10Самоочистка",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:61",
+      "type": "lamp",
+      "name": "AC10Ионизация",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:62",
+      "type": "lamp",
+      "name": "AC10Сон",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:63",
+      "type": "lamp",
+      "name": "AC10Турбо",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:64",
+      "type": "lamp",
+      "name": "AC10Эко",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:65",
+      "type": "lamp",
+      "name": "AC10Звук.индик.",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:66",
+      "type": "lamp",
+      "name": "AC10Тихий",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:67",
+      "type": "lamp",
+      "name": "AC10Подсв.экр.",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:68",
+      "type": "AC",
+      "name": "AC 10",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true,
+        "target": 16.0,
+        "current": 0.0,
+        "mode": "fan",
+        "fan": "auto",
+        "vane-hor": 0,
+        "vane-ver": 0
+      },
+      "t-min": "16",
+      "t-delta": "16",
+      "modes": "0x1f",
+      "vane-hor": "0x7F",
+      "vane-ver": "0x7F"
+    },
+    {
+      "addr": "456:69",
+      "type": "virtual",
+      "name": "AC9Код ош.",
+      "area": "Кондер",
+      "sub-type": "text",
+      "status": {
+        "state": ""
+      }
+    },
+    {
+      "addr": "456:70",
+      "type": "door-sensor",
+      "name": "AC9Ошибка",
+      "area": "Кондер",
+      "sub-type": "alarm",
+      "status": {
+        "state": "closed"
+      }
+    },
+    {
+      "addr": "456:71",
+      "type": "temperature-sensor",
+      "name": "AC9Т.внеш.т.",
+      "area": "Кондер",
+      "status": {
+        "state": 0.0
+      }
+    },
+    {
+      "addr": "456:72",
+      "type": "temperature-sensor",
+      "name": "AC9Т.внут.т.",
+      "area": "Кондер",
+      "status": {
+        "state": 0.0
+      }
+    },
+    {
+      "addr": "456:73",
+      "type": "temperature-sensor",
+      "name": "AC9Т.возд.ул",
+      "area": "Кондер",
+      "status": {
+        "state": 0.0
+      }
+    },
+    {
+      "addr": "456:74",
+      "type": "temperature-sensor",
+      "name": "AC9Т.возд.вн",
+      "area": "Кондер",
+      "status": {
+        "state": 0.0
+      }
+    },
+    {
+      "addr": "456:75",
+      "type": "lamp",
+      "name": "AC9Вер.жалюзи",
+      "area": "Кондер",
+      "sub-type": "air-fan",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:76",
+      "type": "door-sensor",
+      "name": "AC9Подкл.",
+      "area": "Кондер",
+      "status": {
+        "state": "closed"
+      }
+    },
+    {
+      "addr": "456:77",
+      "type": "lamp",
+      "name": "AC9Мягкий поток",
+      "area": "Кондер",
+      "sub-type": "lock",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:78",
+      "type": "lamp",
+      "name": "AC9Деж.обогрев",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:79",
+      "type": "lamp",
+      "name": "AC9Антиплесень",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:80",
+      "type": "lamp",
+      "name": "AC9Самоочистка",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:81",
+      "type": "lamp",
+      "name": "AC9Ионизация",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:82",
+      "type": "lamp",
+      "name": "AC9Сон",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:83",
+      "type": "lamp",
+      "name": "AC9Турбо",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:84",
+      "type": "lamp",
+      "name": "AC9Эко",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:85",
+      "type": "lamp",
+      "name": "AC9Звук.индик.",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:86",
+      "type": "lamp",
+      "name": "AC9Тихий",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:87",
+      "type": "lamp",
+      "name": "AC9Подсв.экр.",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:88",
+      "type": "AC",
+      "name": "AC 9",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true,
+        "target": 16.0,
+        "current": 0.0,
+        "mode": "fan",
+        "fan": "auto",
+        "vane-hor": 0,
+        "vane-ver": 0
+      },
+      "t-min": "16",
+      "t-delta": "16",
+      "modes": "0x1f",
+      "vane-hor": "0x7F",
+      "vane-ver": "0x7F"
+    },
+    {
+      "addr": "456:89",
+      "type": "virtual",
+      "name": "AC8Код ош.",
+      "area": "Кондер",
+      "sub-type": "text",
+      "status": {
+        "state": ""
+      }
+    },
+    {
+      "addr": "456:90",
+      "type": "door-sensor",
+      "name": "AC8Ошибка",
+      "area": "Кондер",
+      "sub-type": "alarm",
+      "status": {
+        "state": "closed"
+      }
+    },
+    {
+      "addr": "456:91",
+      "type": "temperature-sensor",
+      "name": "AC8Т.внеш.т.",
+      "area": "Кондер",
+      "status": {
+        "state": 0.0
+      }
+    },
+    {
+      "addr": "456:92",
+      "type": "temperature-sensor",
+      "name": "AC8Т.внут.т.",
+      "area": "Кондер",
+      "status": {
+        "state": 0.0
+      }
+    },
+    {
+      "addr": "456:93",
+      "type": "temperature-sensor",
+      "name": "AC8Т.возд.ул",
+      "area": "Кондер",
+      "status": {
+        "state": 0.0
+      }
+    },
+    {
+      "addr": "456:94",
+      "type": "temperature-sensor",
+      "name": "AC8Т.возд.вн",
+      "area": "Кондер",
+      "status": {
+        "state": 0.0
+      }
+    },
+    {
+      "addr": "456:95",
+      "type": "lamp",
+      "name": "AC8Вер.жалюзи",
+      "area": "Кондер",
+      "sub-type": "air-fan",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:96",
+      "type": "door-sensor",
+      "name": "AC8Подкл.",
+      "area": "Кондер",
+      "status": {
+        "state": "closed"
+      }
+    },
+    {
+      "addr": "456:97",
+      "type": "lamp",
+      "name": "AC8Мягкий поток",
+      "area": "Кондер",
+      "sub-type": "lock",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:98",
+      "type": "temperature-sensor",
+      "name": "Температура",
+      "area": "Setup",
+      "status": {
+        "state": 32.57
+      }
+    },
+    {
+      "addr": "456:99",
+      "type": "lamp",
+      "name": "AC8Деж.обогрев",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:100",
+      "type": "lamp",
+      "name": "AC8Антиплесень",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:101",
+      "type": "lamp",
+      "name": "AC8Самоочистка",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:102",
+      "type": "lamp",
+      "name": "AC8Ионизация",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:103",
+      "type": "lamp",
+      "name": "AC8Сон",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:104",
+      "type": "lamp",
+      "name": "AC8Турбо",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:105",
+      "type": "lamp",
+      "name": "AC8Эко",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:106",
+      "type": "lamp",
+      "name": "AC8Звук.индик.",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:107",
+      "type": "lamp",
+      "name": "AC8Тихий",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:108",
+      "type": "lamp",
+      "name": "AC8Подсв.экр.",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:109",
+      "type": "AC",
+      "name": "AC 8",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true,
+        "target": 16.0,
+        "current": 0.0,
+        "mode": "fan",
+        "fan": "auto",
+        "vane-hor": 0,
+        "vane-ver": 0
+      },
+      "t-min": "16",
+      "t-delta": "16",
+      "modes": "0x1f",
+      "vane-hor": "0x7F",
+      "vane-ver": "0x7F"
+    },
+    {
+      "addr": "456:110",
+      "type": "virtual",
+      "name": "AC7Код ош.",
+      "area": "Кондер",
+      "sub-type": "text",
+      "status": {
+        "state": ""
+      }
+    },
+    {
+      "addr": "456:111",
+      "type": "door-sensor",
+      "name": "AC7Ошибка",
+      "area": "Кондер",
+      "sub-type": "alarm",
+      "status": {
+        "state": "closed"
+      }
+    },
+    {
+      "addr": "456:112",
+      "type": "temperature-sensor",
+      "name": "AC7Т.внеш.т.",
+      "area": "Кондер",
+      "status": {
+        "state": 0.0
+      }
+    },
+    {
+      "addr": "456:113",
+      "type": "temperature-sensor",
+      "name": "AC7Т.внут.т.",
+      "area": "Кондер",
+      "status": {
+        "state": 0.0
+      }
+    },
+    {
+      "addr": "456:114",
+      "type": "temperature-sensor",
+      "name": "AC7Т.возд.ул",
+      "area": "Кондер",
+      "status": {
+        "state": 0.0
+      }
+    },
+    {
+      "addr": "456:115",
+      "type": "temperature-sensor",
+      "name": "AC7Т.возд.вн",
+      "area": "Кондер",
+      "status": {
+        "state": 0.0
+      }
+    },
+    {
+      "addr": "456:116",
+      "type": "lamp",
+      "name": "AC7Вер.жалюзи",
+      "area": "Кондер",
+      "sub-type": "air-fan",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:117",
+      "type": "door-sensor",
+      "name": "AC7Подкл.",
+      "area": "Кондер",
+      "status": {
+        "state": "closed"
+      }
+    },
+    {
+      "addr": "456:118",
+      "type": "lamp",
+      "name": "AC7Мягкий поток",
+      "area": "Кондер",
+      "sub-type": "lock",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:119",
+      "type": "lamp",
+      "name": "AC7Деж.обогрев",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:120",
+      "type": "lamp",
+      "name": "AC7Антиплесень",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:121",
+      "type": "lamp",
+      "name": "AC7Самоочистка",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:122",
+      "type": "lamp",
+      "name": "AC7Ионизация",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:123",
+      "type": "lamp",
+      "name": "AC7Сон",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:124",
+      "type": "lamp",
+      "name": "AC7Турбо",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:125",
+      "type": "lamp",
+      "name": "AC7Эко",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:126",
+      "type": "lamp",
+      "name": "AC7Звук.индик.",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:127",
+      "type": "lamp",
+      "name": "AC7Тихий",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:128",
+      "type": "lamp",
+      "name": "AC7Подсв.экр.",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:129",
+      "type": "AC",
+      "name": "AC 7",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true,
+        "target": 16.0,
+        "current": 0.0,
+        "mode": "fan",
+        "fan": "auto",
+        "vane-hor": 0,
+        "vane-ver": 0
+      },
+      "t-min": "16",
+      "t-delta": "16",
+      "modes": "0x1f",
+      "vane-hor": "0x7F",
+      "vane-ver": "0x7F"
+    },
+    {
+      "addr": "456:130",
+      "type": "virtual",
+      "name": "AC6Код ош.",
+      "area": "Кондер",
+      "sub-type": "text",
+      "status": {
+        "state": ""
+      }
+    },
+    {
+      "addr": "456:131",
+      "type": "door-sensor",
+      "name": "AC6Ошибка",
+      "area": "Кондер",
+      "sub-type": "alarm",
+      "status": {
+        "state": "closed"
+      }
+    },
+    {
+      "addr": "456:132",
+      "type": "temperature-sensor",
+      "name": "AC6Т.внеш.т.",
+      "area": "Кондер",
+      "status": {
+        "state": 0.0
+      }
+    },
+    {
+      "addr": "456:133",
+      "type": "temperature-sensor",
+      "name": "AC6Т.внут.т.",
+      "area": "Кондер",
+      "status": {
+        "state": 0.0
+      }
+    },
+    {
+      "addr": "456:134",
+      "type": "temperature-sensor",
+      "name": "AC6Т.возд.ул",
+      "area": "Кондер",
+      "status": {
+        "state": 0.0
+      }
+    },
+    {
+      "addr": "456:135",
+      "type": "temperature-sensor",
+      "name": "AC6Т.возд.вн",
+      "area": "Кондер",
+      "status": {
+        "state": 0.0
+      }
+    },
+    {
+      "addr": "456:136",
+      "type": "lamp",
+      "name": "AC6Вер.жалюзи",
+      "area": "Кондер",
+      "sub-type": "air-fan",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:137",
+      "type": "door-sensor",
+      "name": "AC6Подкл.",
+      "area": "Кондер",
+      "status": {
+        "state": "closed"
+      }
+    },
+    {
+      "addr": "456:138",
+      "type": "lamp",
+      "name": "AC6Мягкий поток",
+      "area": "Кондер",
+      "sub-type": "lock",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:139",
+      "type": "lamp",
+      "name": "AC6Деж.обогрев",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:140",
+      "type": "lamp",
+      "name": "AC6Антиплесень",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:141",
+      "type": "lamp",
+      "name": "AC6Самоочистка",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:142",
+      "type": "lamp",
+      "name": "AC6Ионизация",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:143",
+      "type": "lamp",
+      "name": "AC6Сон",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:144",
+      "type": "lamp",
+      "name": "AC6Турбо",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:145",
+      "type": "lamp",
+      "name": "AC6Эко",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:146",
+      "type": "lamp",
+      "name": "AC6Звук.индик.",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:147",
+      "type": "lamp",
+      "name": "AC6Тихий",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:148",
+      "type": "lamp",
+      "name": "AC6Подсв.экр.",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:149",
+      "type": "AC",
+      "name": "AC 6",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true,
+        "target": 16.0,
+        "current": 0.0,
+        "mode": "fan",
+        "fan": "auto",
+        "vane-hor": 0,
+        "vane-ver": 0
+      },
+      "t-min": "16",
+      "t-delta": "16",
+      "modes": "0x1f",
+      "vane-hor": "0x7F",
+      "vane-ver": "0x7F"
+    },
+    {
+      "addr": "456:150",
+      "type": "virtual",
+      "name": "AC5Код ош.",
+      "area": "Кондер",
+      "sub-type": "text",
+      "status": {
+        "state": ""
+      }
+    },
+    {
+      "addr": "456:151",
+      "type": "door-sensor",
+      "name": "AC5Ошибка",
+      "area": "Кондер",
+      "sub-type": "alarm",
+      "status": {
+        "state": "closed"
+      }
+    },
+    {
+      "addr": "456:152",
+      "type": "temperature-sensor",
+      "name": "AC5Т.внеш.т.",
+      "area": "Кондер",
+      "status": {
+        "state": 0.0
+      }
+    },
+    {
+      "addr": "456:153",
+      "type": "temperature-sensor",
+      "name": "AC5Т.внут.т.",
+      "area": "Кондер",
+      "status": {
+        "state": 0.0
+      }
+    },
+    {
+      "addr": "456:154",
+      "type": "temperature-sensor",
+      "name": "AC5Т.возд.ул",
+      "area": "Кондер",
+      "status": {
+        "state": 0.0
+      }
+    },
+    {
+      "addr": "456:155",
+      "type": "temperature-sensor",
+      "name": "AC5Т.возд.вн",
+      "area": "Кондер",
+      "status": {
+        "state": 0.0
+      }
+    },
+    {
+      "addr": "456:156",
+      "type": "lamp",
+      "name": "AC5Вер.жалюзи",
+      "area": "Кондер",
+      "sub-type": "air-fan",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:157",
+      "type": "door-sensor",
+      "name": "AC5Подкл.",
+      "area": "Кондер",
+      "status": {
+        "state": "closed"
+      }
+    },
+    {
+      "addr": "456:158",
+      "type": "lamp",
+      "name": "AC5Мягкий поток",
+      "area": "Кондер",
+      "sub-type": "lock",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:159",
+      "type": "lamp",
+      "name": "AC5Деж.обогрев",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:160",
+      "type": "lamp",
+      "name": "AC5Антиплесень",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:161",
+      "type": "lamp",
+      "name": "AC5Самоочистка",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:162",
+      "type": "lamp",
+      "name": "AC5Ионизация",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:163",
+      "type": "lamp",
+      "name": "AC5Сон",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:164",
+      "type": "lamp",
+      "name": "AC5Турбо",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:165",
+      "type": "lamp",
+      "name": "AC5Эко",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:166",
+      "type": "lamp",
+      "name": "AC5Звук.индик.",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:167",
+      "type": "lamp",
+      "name": "AC5Тихий",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:168",
+      "type": "lamp",
+      "name": "AC5Подсв.экр.",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:169",
+      "type": "AC",
+      "name": "AC 5",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true,
+        "target": 16.0,
+        "current": 0.0,
+        "mode": "fan",
+        "fan": "auto",
+        "vane-hor": 0,
+        "vane-ver": 0
+      },
+      "t-min": "16",
+      "t-delta": "16",
+      "modes": "0x1f",
+      "vane-hor": "0x7F",
+      "vane-ver": "0x7F"
+    },
+    {
+      "addr": "456:170",
+      "type": "virtual",
+      "name": "AC4Код ош.",
+      "area": "Кондер",
+      "sub-type": "text",
+      "status": {
+        "state": ""
+      }
+    },
+    {
+      "addr": "456:171",
+      "type": "door-sensor",
+      "name": "AC4Ошибка",
+      "area": "Кондер",
+      "sub-type": "alarm",
+      "status": {
+        "state": "closed"
+      }
+    },
+    {
+      "addr": "456:172",
+      "type": "temperature-sensor",
+      "name": "AC4Т.внеш.т.",
+      "area": "Кондер",
+      "status": {
+        "state": 0.0
+      }
+    },
+    {
+      "addr": "456:173",
+      "type": "temperature-sensor",
+      "name": "AC4Т.внут.т.",
+      "area": "Кондер",
+      "status": {
+        "state": 0.0
+      }
+    },
+    {
+      "addr": "456:174",
+      "type": "temperature-sensor",
+      "name": "AC4Т.возд.ул",
+      "area": "Кондер",
+      "status": {
+        "state": 0.0
+      }
+    },
+    {
+      "addr": "456:175",
+      "type": "temperature-sensor",
+      "name": "AC4Т.возд.вн",
+      "area": "Кондер",
+      "status": {
+        "state": 0.0
+      }
+    },
+    {
+      "addr": "456:176",
+      "type": "lamp",
+      "name": "AC4Вер.жалюзи",
+      "area": "Кондер",
+      "sub-type": "air-fan",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:177",
+      "type": "door-sensor",
+      "name": "AC4Подкл.",
+      "area": "Кондер",
+      "status": {
+        "state": "closed"
+      }
+    },
+    {
+      "addr": "456:178",
+      "type": "lamp",
+      "name": "AC4Мягкий поток",
+      "area": "Кондер",
+      "sub-type": "lock",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:179",
+      "type": "lamp",
+      "name": "AC4Деж.обогрев",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:180",
+      "type": "lamp",
+      "name": "AC4Антиплесень",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:181",
+      "type": "lamp",
+      "name": "AC4Самоочистка",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:182",
+      "type": "lamp",
+      "name": "AC4Ионизация",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:183",
+      "type": "lamp",
+      "name": "AC4Сон",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:184",
+      "type": "lamp",
+      "name": "AC4Турбо",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:185",
+      "type": "lamp",
+      "name": "AC4Эко",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:186",
+      "type": "lamp",
+      "name": "AC4Звук.индик.",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:187",
+      "type": "lamp",
+      "name": "AC4Тихий",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:188",
+      "type": "lamp",
+      "name": "AC4Подсв.экр.",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:189",
+      "type": "AC",
+      "name": "AC 4",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true,
+        "target": 16.0,
+        "current": 0.0,
+        "mode": "fan",
+        "fan": "auto",
+        "vane-hor": 0,
+        "vane-ver": 0
+      },
+      "t-min": "16",
+      "t-delta": "16",
+      "modes": "0x1f",
+      "vane-hor": "0x7F",
+      "vane-ver": "0x7F"
+    },
+    {
+      "addr": "456:190",
+      "type": "virtual",
+      "name": "AC3Код ош.",
+      "area": "Кондер",
+      "sub-type": "text",
+      "status": {
+        "state": ""
+      }
+    },
+    {
+      "addr": "456:191",
+      "type": "door-sensor",
+      "name": "AC3Ошибка",
+      "area": "Кондер",
+      "sub-type": "alarm",
+      "status": {
+        "state": "closed"
+      }
+    },
+    {
+      "addr": "456:192",
+      "type": "temperature-sensor",
+      "name": "AC3Т.внеш.т.",
+      "area": "Кондер",
+      "status": {
+        "state": 0.0
+      }
+    },
+    {
+      "addr": "456:193",
+      "type": "temperature-sensor",
+      "name": "AC3Т.внут.т.",
+      "area": "Кондер",
+      "status": {
+        "state": 0.0
+      }
+    },
+    {
+      "addr": "456:194",
+      "type": "temperature-sensor",
+      "name": "AC3Т.возд.ул",
+      "area": "Кондер",
+      "status": {
+        "state": 0.0
+      }
+    },
+    {
+      "addr": "456:195",
+      "type": "temperature-sensor",
+      "name": "AC3Т.возд.вн",
+      "area": "Кондер",
+      "status": {
+        "state": 0.0
+      }
+    },
+    {
+      "addr": "456:196",
+      "type": "lamp",
+      "name": "AC3Вер.жалюзи",
+      "area": "Кондер",
+      "sub-type": "air-fan",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:197",
+      "type": "door-sensor",
+      "name": "AC3Подкл.",
+      "area": "Кондер",
+      "status": {
+        "state": "closed"
+      }
+    },
+    {
+      "addr": "456:198",
+      "type": "lamp",
+      "name": "AC3Мягкий поток",
+      "area": "Кондер",
+      "sub-type": "lock",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:199",
+      "type": "lamp",
+      "name": "AC3Деж.обогрев",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:200",
+      "type": "lamp",
+      "name": "AC3Антиплесень",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:201",
+      "type": "lamp",
+      "name": "AC3Самоочистка",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:202",
+      "type": "lamp",
+      "name": "AC3Ионизация",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:203",
+      "type": "lamp",
+      "name": "AC3Сон",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:204",
+      "type": "lamp",
+      "name": "AC3Турбо",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:205",
+      "type": "lamp",
+      "name": "AC3Эко",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:206",
+      "type": "lamp",
+      "name": "AC3Звук.индик.",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:207",
+      "type": "lamp",
+      "name": "AC3Тихий",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:208",
+      "type": "lamp",
+      "name": "AC3Подсв.экр.",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:209",
+      "type": "AC",
+      "name": "AC 3",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true,
+        "target": 16.0,
+        "current": 0.0,
+        "mode": "fan",
+        "fan": "auto",
+        "vane-hor": 0,
+        "vane-ver": 0
+      },
+      "t-min": "16",
+      "t-delta": "16",
+      "modes": "0x1f",
+      "vane-hor": "0x7F",
+      "vane-ver": "0x7F"
+    },
+    {
+      "addr": "456:210",
+      "type": "virtual",
+      "name": "AC2Код ош.",
+      "area": "Кондер",
+      "sub-type": "text",
+      "status": {
+        "state": ""
+      }
+    },
+    {
+      "addr": "456:211",
+      "type": "door-sensor",
+      "name": "AC2Ошибка",
+      "area": "Кондер",
+      "sub-type": "alarm",
+      "status": {
+        "state": "closed"
+      }
+    },
+    {
+      "addr": "456:212",
+      "type": "temperature-sensor",
+      "name": "AC2Т.внеш.т.",
+      "area": "Кондер",
+      "status": {
+        "state": 0.0
+      }
+    },
+    {
+      "addr": "456:213",
+      "type": "temperature-sensor",
+      "name": "AC2Т.внут.т.",
+      "area": "Кондер",
+      "status": {
+        "state": 0.0
+      }
+    },
+    {
+      "addr": "456:214",
+      "type": "temperature-sensor",
+      "name": "AC2Т.возд.ул",
+      "area": "Кондер",
+      "status": {
+        "state": 0.0
+      }
+    },
+    {
+      "addr": "456:215",
+      "type": "temperature-sensor",
+      "name": "AC2Т.возд.вн",
+      "area": "Кондер",
+      "status": {
+        "state": 0.0
+      }
+    },
+    {
+      "addr": "456:216",
+      "type": "lamp",
+      "name": "AC2Вер.жалюзи",
+      "area": "Кондер",
+      "sub-type": "air-fan",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:217",
+      "type": "door-sensor",
+      "name": "AC2Подкл.",
+      "area": "Кондер",
+      "status": {
+        "state": "closed"
+      }
+    },
+    {
+      "addr": "456:218",
+      "type": "lamp",
+      "name": "AC2Мягкий поток",
+      "area": "Кондер",
+      "sub-type": "lock",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:219",
+      "type": "lamp",
+      "name": "AC2Деж.обогрев",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:220",
+      "type": "lamp",
+      "name": "AC2Антиплесень",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:221",
+      "type": "lamp",
+      "name": "AC2Самоочистка",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:222",
+      "type": "lamp",
+      "name": "AC2Ионизация",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:223",
+      "type": "lamp",
+      "name": "AC2Сон",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:224",
+      "type": "lamp",
+      "name": "AC2Турбо",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:225",
+      "type": "lamp",
+      "name": "AC2Эко",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:226",
+      "type": "lamp",
+      "name": "AC2Звук.индик.",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:227",
+      "type": "lamp",
+      "name": "AC2Тихий",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:228",
+      "type": "lamp",
+      "name": "AC2Подсв.экр.",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:229",
+      "type": "AC",
+      "name": "AC 2",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true,
+        "target": 16.0,
+        "current": 0.0,
+        "mode": "fan",
+        "fan": "auto",
+        "vane-hor": 0,
+        "vane-ver": 0
+      },
+      "t-min": "16",
+      "t-delta": "16",
+      "modes": "0x1f",
+      "vane-hor": "0x7F",
+      "vane-ver": "0x7F"
+    },
+    {
+      "addr": "456:230",
+      "type": "virtual",
+      "name": "AC1Код ош.",
+      "area": "Кондер",
+      "sub-type": "text",
+      "status": {
+        "state": "No error������������������������������������������"
+      }
+    },
+    {
+      "addr": "456:231",
+      "type": "door-sensor",
+      "name": "AC1Ошибка",
+      "area": "Кондер",
+      "sub-type": "alarm",
+      "status": {
+        "state": "closed"
+      }
+    },
+    {
+      "addr": "456:232",
+      "type": "temperature-sensor",
+      "name": "AC1Т.внеш.т.",
+      "area": "Кондер",
+      "status": {
+        "state": 58.0
+      }
+    },
+    {
+      "addr": "456:233",
+      "type": "temperature-sensor",
+      "name": "AC1Т.внут.т.",
+      "area": "Кондер",
+      "status": {
+        "state": 23.0
+      }
+    },
+    {
+      "addr": "456:234",
+      "type": "temperature-sensor",
+      "name": "AC1Т.возд.ул",
+      "area": "Кондер",
+      "status": {
+        "state": 58.0
+      }
+    },
+    {
+      "addr": "456:235",
+      "type": "temperature-sensor",
+      "name": "AC1Т.возд.вн",
+      "area": "Кондер",
+      "status": {
+        "state": 23.7
+      }
+    },
+    {
+      "addr": "456:236",
+      "type": "lamp",
+      "name": "AC1Вер.жалюзи",
+      "area": "Кондер",
+      "sub-type": "air-fan",
+      "status": {
+        "state": "on",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:237",
+      "type": "door-sensor",
+      "name": "AC1Подкл.",
+      "area": "Кондер",
+      "status": {
+        "state": "opened"
+      }
+    },
+    {
+      "addr": "456:238",
+      "type": "lamp",
+      "name": "AC1Мягкий поток",
+      "area": "Кондер",
+      "sub-type": "lock",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:239",
+      "type": "lamp",
+      "name": "AC1Деж.обогрев",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:240",
+      "type": "lamp",
+      "name": "AC1Антиплесень",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:241",
+      "type": "lamp",
+      "name": "AC1Самоочистка",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:242",
+      "type": "lamp",
+      "name": "AC1Ионизация",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:243",
+      "type": "lamp",
+      "name": "AC1Сон",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:244",
+      "type": "lamp",
+      "name": "AC1Турбо",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:245",
+      "type": "lamp",
+      "name": "AC1Эко",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:246",
+      "type": "lamp",
+      "name": "AC1Звук.индик.",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:247",
+      "type": "lamp",
+      "name": "AC1Тихий",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:248",
+      "type": "lamp",
+      "name": "AC1Подсв.экр.",
+      "area": "Кондер",
+      "status": {
+        "state": "on",
+        "auto-state": true
+      }
+    },
+    {
+      "addr": "456:249",
+      "type": "AC",
+      "name": "Кондиционер",
+      "area": "Кондер",
+      "status": {
+        "state": "off",
+        "auto-state": true,
+        "target": 22.0,
+        "current": 23.7,
+        "mode": "heat",
+        "fan": null,
+        "vane-hor": 6,
+        "vane-ver": 6
+      },
+      "t-min": "16",
+      "t-delta": "16",
+      "modes": "0x1f",
+      "vane-hor": "0x7F",
+      "vane-ver": "0x7F"
+    },
+    {
+      "addr": "500:1",
+      "type": "dimmer-lamp",
+      "name": "Диммер",
+      "area": "led",
+      "status": {
+        "state": "off",
+        "auto-state": true,
+        "level": 0.0
+      },
+      "linked": [
+        {
+          "addr": "407:17",
+          "click": "1"
+        }
+      ]
+    },
+    {
+      "addr": "500:2",
+      "type": "dimmer-lamp",
+      "name": "Диммер",
+      "area": "led",
+      "status": {
+        "state": "off",
+        "auto-state": true,
+        "level": 0.0
+      },
+      "linked": [
+        {
+          "addr": "407:20",
+          "click": "1"
+        }
+      ]
+    },
+    {
+      "addr": "500:3",
+      "type": "dimmer-lamp",
+      "name": "Диммер",
+      "area": "led",
+      "status": {
+        "state": "off",
+        "auto-state": true,
+        "level": 0.0
+      },
+      "linked": [
+        {
+          "addr": "407:17",
+          "click": "1"
+        }
+      ]
+    },
+    {
+      "addr": "500:4",
+      "type": "dimmer-lamp",
+      "name": "Диммер",
+      "area": "led",
+      "status": {
+        "state": "off",
+        "auto-state": true,
+        "level": 0.0
+      },
+      "linked": [
+        {
+          "addr": "407:20",
+          "click": "1"
+        }
+      ]
+    },
+    {
+      "addr": "500:5",
+      "type": "dimmer-lamp",
+      "name": "Диммер",
+      "area": "led",
+      "status": {
+        "state": "off",
+        "auto-state": true,
+        "level": 0.0
+      },
+      "linked": [
+        {
+          "addr": "407:17",
+          "click": "1"
+        }
+      ]
+    },
+    {
+      "addr": "500:6",
+      "type": "dimmer-lamp",
+      "name": "Диммер",
+      "area": "led",
+      "status": {
+        "state": "off",
+        "auto-state": true,
+        "level": 0.0
+      },
+      "linked": [
+        {
+          "addr": "407:20",
+          "click": "1"
+        }
+      ]
+    },
+    {
+      "addr": "500:7",
+      "type": "dimmer-lamp",
+      "name": "Диммер",
+      "area": "led",
+      "status": {
+        "state": "off",
+        "auto-state": true,
+        "level": 0.0
+      },
+      "linked": [
+        {
+          "addr": "407:17",
+          "click": "1"
+        }
+      ]
+    },
+    {
+      "addr": "500:8",
+      "type": "dimmer-lamp",
+      "name": "Диммер",
+      "area": "led",
+      "status": {
+        "state": "off",
+        "auto-state": true,
+        "level": 0.0
+      },
+      "linked": [
+        {
+          "addr": "407:20",
+          "click": "1"
+        }
+      ]
+    },
+    {
+      "addr": "500:97",
+      "type": "temperature-sensor",
+      "name": "Temperature",
+      "area": "Setup",
+      "status": {
+        "state": 20.45
+      }
+    },
+    {
+      "addr": "500:98",
+      "type": "temperature-sensor",
+      "name": "Temperature",
+      "area": "Setup",
+      "status": {
+        "state": 22.42
+      }
+    },
+    {
+      "addr": "500:249",
+      "type": "dimmer-lamp",
+      "name": "Холодный свет",
+      "area": "led",
+      "status": {
+        "state": "off",
+        "auto-state": true,
+        "level": 0.0
+      }
+    },
+    {
+      "addr": "500:250",
+      "type": "dimmer-lamp",
+      "name": "Теплый свет",
+      "area": "led",
+      "status": {
+        "state": "off",
+        "auto-state": true,
+        "level": 0.0
+      }
+    },
+    {
+      "addr": "999:1",
+      "type": "illumination-sensor",
+      "name": "",
+      "area": "Setup",
+      "status": {
+        "state": 90.75
+      },
+      "plugin": "shsp-outside"
+    },
+    {
+      "addr": "999:2",
+      "type": "humidity-sensor",
+      "name": "",
+      "area": "Setup",
+      "status": {
+        "state": 55.0
+      },
+      "plugin": "shsp-outside"
+    },
+    {
+      "addr": "999:3",
+      "type": "temperature-sensor",
+      "name": "",
+      "area": "Setup",
+      "status": {
+        "state": 19.0
+      },
+      "plugin": "shsp-outside"
+    },
+    {
+      "addr": "999:4",
+      "type": "virtual",
+      "name": "Pressure",
+      "area": "Setup",
+      "sub-type": "text",
+      "status": {
+        "state": "764mmHg"
+      },
+      "plugin": "shsp-outside"
+    },
+    {
+      "addr": "999:5",
+      "type": "virtual",
+      "name": "Outside",
+      "area": "Setup",
+      "sub-type": "text",
+      "status": {
+        "state": "scattered clouds"
+      },
+      "plugin": "shsp-outside"
+    },
+    {
+      "addr": "999:6",
+      "type": "virtual",
+      "name": "Weather condition",
+      "area": "Setup",
+      "sub-type": "long-text",
+      "status": {
+        "state": "scattered clouds, temperature: 19°C, humidity: 55%, pressure: 764mmHg, wind 14km/h"
+      },
+      "plugin": "shsp-outside"
+    },
+    {
+      "addr": "999:7",
+      "type": "virtual",
+      "name": "Weather forecast",
+      "area": "Setup",
+      "sub-type": "long-text",
+      "status": {
+        "state": "Sun: few clouds, hi: 19°C, low: 11°C. Mon: clear sky, hi: 18°C, low: 10°C. Tue: broken clouds, hi: 20°C, low: 11°C. Wed: light rain, hi: 20°C, low: 12°C. Thu: clear sky, hi: 17°C, low: 7°C. "
+      },
+      "plugin": "shsp-outside"
+    },
+    {
+      "addr": "999:8",
+      "type": "virtual",
+      "name": "Code",
+      "area": "Setup",
+      "sub-type": "text",
+      "status": {
+        "state": "44"
+      },
+      "plugin": "shsp-outside"
+    },
+    {
+      "addr": "999:9",
+      "type": "virtual",
+      "name": "weather",
+      "area": "Setup",
+      "status": {
+        "hex": "0x2C3713FC02000EF0001E06130B2000120A1A01140B0902140C2003110700"
+      },
+      "plugin": "shsp-outside"
+    },
+    {
+      "addr": "999:10",
+      "type": "virtual",
+      "name": "sunset&sunrise",
+      "area": "Setup",
+      "sub-type": "sunrise",
+      "status": {
+        "hex": "0x7B016304"
+      },
+      "plugin": "shsp-outside"
+    }
+  ]
+}

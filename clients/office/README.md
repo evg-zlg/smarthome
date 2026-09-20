@@ -11,3 +11,7 @@ scripts/device-ssh office rasppi3b
 ```bash
 scripts/device-ssh office rasppi3b 'sudo -n true && echo sudo-ok'
 ```
+
+Доступ к контроллеру Larnitech находится в
+`credentials/larnitech/controller.yaml`. Файл содержит адрес панели,
+административный логин/пароль, API2 WebSocket URL и существующий API key.

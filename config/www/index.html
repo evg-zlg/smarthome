@@ -1,12 +1,25 @@
 <!doctype html>
 <html lang="ru">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Smart Home Gateway</title>
-  </head>
-  <body>
-    <h1>Smart Home Gateway</h1>
-    <p>Raspberry Pi работает. Интеграционные сервисы ещё не настроены.</p>
-  </body>
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Карта умного дома</title>
+  <style>
+    body{font:16px/1.45 system-ui,sans-serif;max-width:1100px;margin:32px auto;padding:0 20px;color:#20221f;background:#f5f3ee}h1{font-size:32px}h2{margin-top:0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}section{background:#fff;border:1px solid #ddd8cc;border-radius:12px;padding:20px}.status{font-weight:700}.online{color:#14733b}.error{color:#a02b23}table{width:100%;border-collapse:collapse;font-size:14px}td,th{text-align:left;padding:8px;border-bottom:1px solid #eee;vertical-align:top}code{overflow-wrap:anywhere}.muted{color:#696969}
+  </style>
+</head>
+<body>
+  <h1>Карта умного дома</h1><p class="muted">Raspberry Pi · Larnitech MF‑14.C · VAKIO Base Smart</p>
+  <div class="grid"><section><h2>Шлюз</h2><div id="gateway">Загрузка…</div></section><section><h2>VAKIO</h2><div id="vakio">Загрузка…</div></section></div>
+  <section style="margin-top:16px"><h2>Larnitech</h2><div id="larnitech">Загрузка…</div></section>
+  <script>
+    const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    async function refresh(){try{const data=await fetch('/gateway/map',{cache:'no-store'}).then(r=>r.json());
+      gateway.innerHTML=`<p class="status ${data.status==='online'?'online':'error'}">${esc(data.status)}</p><p>Управление VAKIO: ${data.control_enabled?'включено':'выключено'}</p>`;
+      const topics=Object.entries(data.vakio.topics||{}).map(([k,v])=>`<tr><td><code>${esc(k)}</code></td><td>${esc(v)}</td></tr>`).join('');
+      vakio.innerHTML=`<p class="status ${data.vakio.status==='online'?'online':''}">${esc(data.vakio.status)}</p><table>${topics||'<tr><td>Ожидание MQTT-сообщений</td></tr>'}</table>`;
+      const devices=(data.larnitech.devices||[]).map(d=>`<tr><td>${esc(d.area)}</td><td>${esc(d.name)}</td><td>${esc(d.type)}</td><td><code>${esc(d.addr)}</code></td><td><code>${esc(JSON.stringify(d.status||{}))}</code></td></tr>`).join('');
+      larnitech.innerHTML=`<p class="status">${esc(data.larnitech.status)} · устройств: ${(data.larnitech.devices||[]).length}</p><table><thead><tr><th>Зона</th><th>Имя</th><th>Тип</th><th>Адрес</th><th>Состояние</th></tr></thead><tbody>${devices||'<tr><td colspan="5">Для чтения карты нужен API key Larnitech</td></tr>'}</tbody></table>`;
+    }catch(error){gateway.innerHTML=`<p class="error">${esc(error)}</p>`}}refresh();setInterval(refresh,5000);
+  </script>
+</body>
 </html>
