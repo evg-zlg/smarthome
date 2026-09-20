@@ -31,10 +31,13 @@ MQTT_USERNAME = os.environ.get("MQTT_USERNAME", "gateway")
 MQTT_PASSWORD = os.environ.get("MQTT_PASSWORD", "")
 VAKIO_TOPIC = os.environ.get("VAKIO_TOPIC", "vakio").strip("/")
 CONTROL_ENABLED = os.environ.get("CONTROL_ENABLED", "false").lower() == "true"
+VAKIO_TELEMETRY_MAX_AGE = max(15, int(os.environ.get("VAKIO_TELEMETRY_MAX_AGE", "90")))
+VAKIO_CONFIRM_TIMEOUT = max(1, int(os.environ.get("VAKIO_CONFIRM_TIMEOUT", "8")))
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 LOG = logging.getLogger("smarthome-gateway")
 lock = threading.Lock()
+confirmation = threading.Condition(lock)
 state: dict[str, Any] = {
     "started_at": time.time(),
     "mqtt": {"status": "waiting", "updated_at": None, "error": None},
@@ -46,6 +49,8 @@ state: dict[str, Any] = {
     "vakio": {"status": "waiting", "updated_at": None, "topics": {}, "error": None},
 }
 mqtt_client: mqtt.Client | None = None
+last_device_message_monotonic: float | None = None
+pending_confirmation: tuple[str, str] | None = None
 
 
 def utc_timestamp() -> str:
@@ -288,7 +293,10 @@ def on_connect(client: mqtt.Client, userdata: object, flags: dict[str, Any], rea
         with lock:
             state["mqtt"].update(status="error", updated_at=utc_timestamp(), error=f"MQTT connect: {reason_code}")
         return
-    client.subscribe(f"{VAKIO_TOPIC}/#")
+    client.subscribe(
+        f"{VAKIO_TOPIC}/#",
+        options=mqtt.SubscribeOptions(qos=1, noLocal=True),
+    )
     with lock:
         state["mqtt"].update(status="online", updated_at=utc_timestamp(), error=None)
         state["vakio"].update(status="waiting", error=None)
@@ -302,10 +310,14 @@ def on_disconnect(client: mqtt.Client, userdata: object, disconnect_flags: Any, 
 
 def on_message(client: mqtt.Client, userdata: object, message: mqtt.MQTTMessage) -> None:
     del client, userdata
+    global last_device_message_monotonic
     value = message.payload.decode("utf-8", errors="replace")
-    with lock:
+    with confirmation:
+        last_device_message_monotonic = time.monotonic()
         state["vakio"]["topics"][message.topic] = value
         state["vakio"].update(status="online", updated_at=utc_timestamp(), error=None)
+        if pending_confirmation == (message.topic, value):
+            confirmation.notify_all()
 
 
 def start_mqtt() -> mqtt.Client:
@@ -321,6 +333,7 @@ def start_mqtt() -> mqtt.Client:
 
 
 def publish_vakio(command: dict[str, Any]) -> tuple[str, str]:
+    global pending_confirmation
     if not CONTROL_ENABLED:
         raise PermissionError("VAKIO control is disabled")
     if mqtt_client is None:
@@ -334,10 +347,26 @@ def publish_vakio(command: dict[str, Any]) -> tuple[str, str]:
     value = str(command.get("value", ""))
     if key not in allowed or value not in allowed[key]:
         raise ValueError("Unsupported VAKIO command")
+    if last_device_message_monotonic is None or (
+        time.monotonic() - last_device_message_monotonic > VAKIO_TELEMETRY_MAX_AGE
+    ):
+        raise RuntimeError("VAKIO telemetry is not fresh")
     topic = f"{VAKIO_TOPIC}/{key}"
-    result = mqtt_client.publish(topic, value, qos=1)
-    if result.rc != mqtt.MQTT_ERR_SUCCESS:
-        raise RuntimeError(f"MQTT publish failed: {result.rc}")
+    deadline = time.monotonic() + VAKIO_CONFIRM_TIMEOUT
+    with confirmation:
+        pending_confirmation = (topic, value)
+        result = mqtt_client.publish(topic, value, qos=1)
+        if result.rc != mqtt.MQTT_ERR_SUCCESS:
+            pending_confirmation = None
+            raise RuntimeError(f"MQTT publish failed: {result.rc}")
+        while pending_confirmation is not None:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                pending_confirmation = None
+                raise RuntimeError("VAKIO did not confirm the command")
+            confirmation.wait(remaining)
+            if state["vakio"]["topics"].get(topic) == value:
+                pending_confirmation = None
     return topic, value
 
 
@@ -385,7 +414,7 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError("Invalid request size")
             command = json.loads(self.rfile.read(length))
             topic, value = publish_vakio(command)
-            self.json_response(202, {"accepted": True, "topic": topic, "value": value})
+            self.json_response(200, {"confirmed": True, "topic": topic, "value": value})
         except PermissionError as exc:
             self.json_response(403, {"error": str(exc)})
         except (ValueError, json.JSONDecodeError) as exc:

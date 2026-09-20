@@ -1,6 +1,8 @@
 import importlib.util
 import os
 import sys
+import threading
+import time
 import unittest
 import json
 from pathlib import Path
@@ -16,6 +18,7 @@ except ModuleNotFoundError:
     paho_client = ModuleType("paho.mqtt.client")
     paho_client.MQTT_ERR_SUCCESS = 0
     paho_client.CallbackAPIVersion = SimpleNamespace(VERSION2=2)
+    paho_client.SubscribeOptions = lambda **kwargs: SimpleNamespace(**kwargs)
     paho_client.Client = object
     paho_mqtt.client = paho_client
     paho.mqtt = paho_mqtt
@@ -39,12 +42,16 @@ class FakeResult:
 class FakeClient:
     def publish(self, topic, value, qos):
         self.message = (topic, value, qos)
+        message = SimpleNamespace(topic=topic, payload=value.encode())
+        threading.Timer(0.01, app.on_message, args=(self, None, message)).start()
         return FakeResult()
 
 
 class GatewayTests(unittest.TestCase):
     def setUp(self):
         app.mqtt_client = FakeClient()
+        app.last_device_message_monotonic = time.monotonic()
+        app.pending_confirmation = None
 
     def test_allowed_vakio_command(self):
         self.assertEqual(app.publish_vakio({"command": "speed", "value": 4}), ("vakio/speed", "4"))
@@ -61,9 +68,21 @@ class GatewayTests(unittest.TestCase):
             def __eq__(self, other):
                 return other == 0
 
-        client = SimpleNamespace(subscribe=lambda topic: None)
+        subscription = {}
+
+        def subscribe(topic, options):
+            subscription.update(topic=topic, options=options)
+
+        client = SimpleNamespace(subscribe=subscribe)
         app.on_connect(client, None, {}, SuccessReasonCode())
         self.assertEqual(app.state["mqtt"]["status"], "online")
+        self.assertEqual(subscription["topic"], "vakio/#")
+        self.assertTrue(subscription["options"].noLocal)
+
+    def test_rejects_command_without_fresh_telemetry(self):
+        app.last_device_message_monotonic = None
+        with self.assertRaisesRegex(RuntimeError, "telemetry is not fresh"):
+            app.publish_vakio({"command": "state", "value": "on"})
 
     def test_observed_map_separates_physical_modules_and_api_channels(self):
         inventory = json.loads(
