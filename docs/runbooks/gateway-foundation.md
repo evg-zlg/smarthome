@@ -26,6 +26,18 @@ curl --fail --silent http://127.0.0.1/gateway/map | \
 MQTT-телеметрию. `MQTT: online` при этом подтверждает доступность самого брокера.
 `control_enabled` должен оставаться `false`, а `observed.read_only` — `true`.
 
+В объекте `larnitech` нормальное соединение имеет `status: online`, адрес
+`315:36` в `subscribed_addrs` и актуальный `heartbeat_at`. Поле
+`last_event_at` меняется только при фактическом событии датчика; отсутствие
+изменений CO2 само по себе не означает потерю соединения.
+
+Проверка восстановления подписки и поступления событий:
+
+```bash
+journalctl -u smarthome-gateway.service --since today | \
+  grep 'Larnitech API2 subscribed\|Larnitech event received'
+```
+
 Статическая панель доступна по `http://192.168.1.183/` и обновляет данные раз в
 10 секунд. При замене файлов проверить синтаксис и перезапустить только gateway:
 
