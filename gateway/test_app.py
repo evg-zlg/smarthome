@@ -411,6 +411,27 @@ class GatewayTests(unittest.TestCase):
             [{"addr": "407:199", "type": "lamp"}],
         ))
 
+    def test_default_subscriptions_include_co2_and_air_conditioner(self):
+        self.assertEqual(
+            app.LARNITECH_SUBSCRIBE_ADDRS,
+            ("315:36", "456:249", *app.VAKIO_LARNITECH_ADDRS),
+        )
+
+    def test_ac_binary_event_preserves_detailed_state_until_refresh(self):
+        detailed = {
+            "state": "on", "mode": "heat", "target": 28.0, "current": 23.0,
+        }
+        devices = [{"addr": "456:249", "type": "AC", "status": detailed.copy()}]
+        changed = app.merge_larnitech_devices(
+            devices,
+            [{"addr": "456:249", "status": "0x3900166605001C0000"}],
+        )
+        self.assertEqual(changed, ["456:249"])
+        self.assertEqual(devices[0]["status"]["state"], "on")
+        self.assertEqual(devices[0]["status"]["mode"], "heat")
+        self.assertEqual(devices[0]["status"]["target"], 28.0)
+        self.assertEqual(devices[0]["status"]["raw"], "0x3900166605001C0000")
+
     def test_real_status_event_shape_updates_co2(self):
         devices = [{"addr": "315:36", "type": "co2-sensor", "status": {"state": 687}}]
         event = {"event": "statuses", "devices": [{"addr": "315:36", "status": "0x0B03"}]}
