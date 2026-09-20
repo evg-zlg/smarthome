@@ -20,6 +20,11 @@ LARNITECH_URL = os.environ.get("LARNITECH_URL", "http://192.168.1.185/API2/")
 LARNITECH_WS_URL = os.environ.get("LARNITECH_WS_URL", "ws://192.168.1.185:2041/api")
 LARNITECH_API_KEY = os.environ.get("LARNITECH_API_KEY", "")
 LARNITECH_POLL_SECONDS = max(10, int(os.environ.get("LARNITECH_POLL_SECONDS", "30")))
+LARNITECH_SUBSCRIBE_ADDRS = tuple(
+    addr.strip()
+    for addr in os.environ.get("LARNITECH_SUBSCRIBE_ADDRS", "315:36").split(",")
+    if addr.strip()
+)
 MQTT_HOST = os.environ.get("MQTT_HOST", "127.0.0.1")
 MQTT_PORT = int(os.environ.get("MQTT_PORT", "1883"))
 MQTT_USERNAME = os.environ.get("MQTT_USERNAME", "gateway")
@@ -33,7 +38,11 @@ lock = threading.Lock()
 state: dict[str, Any] = {
     "started_at": time.time(),
     "mqtt": {"status": "waiting", "updated_at": None, "error": None},
-    "larnitech": {"status": "not_configured", "updated_at": None, "devices": [], "error": None},
+    "larnitech": {
+        "status": "not_configured", "updated_at": None, "heartbeat_at": None,
+        "last_event_at": None, "subscribed_addrs": [], "reconnects": 0,
+        "devices": [], "error": None,
+    },
     "vakio": {"status": "waiting", "updated_at": None, "topics": {}, "error": None},
 }
 mqtt_client: mqtt.Client | None = None
@@ -77,7 +86,7 @@ def observed_map(result: dict[str, Any]) -> dict[str, Any]:
     devices = larnitech.get("devices", [])
     if not isinstance(devices, list):
         devices = []
-    larnitech_age = age_seconds(larnitech.get("updated_at"))
+    larnitech_age = age_seconds(larnitech.get("heartbeat_at") or larnitech.get("updated_at"))
     mqtt_age = age_seconds(result["mqtt"].get("updated_at"))
     vakio_age = age_seconds(result["vakio"].get("updated_at"))
 
@@ -138,35 +147,138 @@ def observed_map(result: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def larnitech_request() -> dict[str, Any]:
-    connection = websocket.create_connection(LARNITECH_WS_URL, timeout=30)
+def larnitech_response(connection: websocket.WebSocket) -> dict[str, Any]:
+    response = json.loads(connection.recv(), strict=False)
+    if not isinstance(response, dict):
+        raise ValueError("Larnitech response is not an object")
+    return response
+
+
+def decode_larnitech_event_state(device_type: str | None, raw_status: str) -> int | float | str:
+    """Decode only confirmed office sensor formats; keep unknown values raw."""
+    if not raw_status.startswith("0x"):
+        return raw_status
     try:
-        connection.send(json.dumps({"request": "authorize", "key": LARNITECH_API_KEY}))
-        authorization = json.loads(connection.recv())
-        if authorization.get("response") != "authorize" or authorization.get("error"):
-            raise ValueError(f"Larnitech authorization failed: {authorization}")
-        connection.send(json.dumps({"request": "get-devices", "status": "detailed"}))
-        return json.loads(connection.recv(), strict=False)
-    finally:
+        payload = bytes.fromhex(raw_status[2:])
+    except ValueError:
+        return raw_status
+    if not payload:
+        return raw_status
+    if device_type == "co2-sensor" and len(payload) >= 2:
+        return int.from_bytes(payload[:2], "little", signed=False)
+    if device_type == "temperature-sensor" and len(payload) >= 2:
+        return round(int.from_bytes(payload[:2], "little", signed=True) / 100, 2)
+    if device_type == "humidity-sensor":
+        return int.from_bytes(payload[:2], "little", signed=False)
+    return raw_status
+
+
+def merge_larnitech_devices(devices: list[dict[str, Any]], updates: list[dict[str, Any]]) -> list[str]:
+    """Merge API2 status messages into the detailed inventory in place."""
+    by_addr = {str(device.get("addr")): device for device in devices}
+    changed: list[str] = []
+    for update in updates:
+        addr = str(update.get("addr", ""))
+        device = by_addr.get(addr)
+        if not addr or device is None:
+            continue
+        incoming = update.get("status")
+        if isinstance(incoming, dict):
+            device.setdefault("status", {}).update(incoming)
+        elif isinstance(incoming, str):
+            device_status = device.setdefault("status", {})
+            device_status["raw"] = incoming
+            device_status["state"] = decode_larnitech_event_state(device.get("type"), incoming)
+        else:
+            continue
+        changed.append(addr)
+    return changed
+
+
+def open_larnitech_connection() -> tuple[websocket.WebSocket, list[dict[str, Any]]]:
+    connection = websocket.create_connection(LARNITECH_WS_URL, timeout=LARNITECH_POLL_SECONDS)
+    connection.send(json.dumps({"request": "authorize", "key": LARNITECH_API_KEY}))
+    authorization = larnitech_response(connection)
+    if authorization.get("response") != "authorize" or authorization.get("error"):
         connection.close()
+        raise ValueError(f"Larnitech authorization failed: {authorization}")
+
+    connection.send(json.dumps({"request": "get-devices", "status": "detailed"}))
+    inventory = larnitech_response(connection)
+    devices = inventory.get("devices", [])
+    if not isinstance(devices, list):
+        connection.close()
+        raise ValueError("Larnitech response has no devices list")
+
+    for addr in LARNITECH_SUBSCRIBE_ADDRS:
+        connection.send(json.dumps({"request": "status-subscribe", "addr": addr}))
+        subscribed = larnitech_response(connection)
+        if subscribed.get("response") != "status-subscribe" or subscribed.get("subscribed") != 1:
+            connection.close()
+            raise ValueError(f"Larnitech subscription failed for {addr}: {subscribed}")
+        updates = subscribed.get("devices", [])
+        if isinstance(updates, list):
+            merge_larnitech_devices(devices, updates)
+    return connection, devices
 
 
 def larnitech_worker() -> None:
     if not LARNITECH_API_KEY:
         return
     while True:
+        connection: websocket.WebSocket | None = None
         try:
-            response = larnitech_request()
-            devices = response.get("devices", [])
-            if not isinstance(devices, list):
-                raise ValueError("Larnitech response has no devices list")
+            connection, devices = open_larnitech_connection()
+            now = utc_timestamp()
             with lock:
-                state["larnitech"].update(status="online", updated_at=utc_timestamp(), devices=devices, error=None)
-        except (OSError, ValueError, json.JSONDecodeError) as exc:
-            LOG.warning("Larnitech inventory failed: %s", exc)
+                state["larnitech"].update(
+                    status="online", updated_at=now, heartbeat_at=now,
+                    subscribed_addrs=list(LARNITECH_SUBSCRIBE_ADDRS), devices=devices, error=None,
+                )
+            LOG.info("Larnitech API2 subscribed to %s", ",".join(LARNITECH_SUBSCRIBE_ADDRS))
+
+            keepalive_pending = False
+            while True:
+                try:
+                    response = larnitech_response(connection)
+                except websocket.WebSocketTimeoutException:
+                    if keepalive_pending:
+                        raise TimeoutError("Larnitech keepalive timed out")
+                    if not LARNITECH_SUBSCRIBE_ADDRS:
+                        connection.ping()
+                        with lock:
+                            state["larnitech"]["heartbeat_at"] = utc_timestamp()
+                        continue
+                    connection.send(json.dumps({
+                        "request": "status-get", "addr": LARNITECH_SUBSCRIBE_ADDRS[0],
+                        "status": "detailed",
+                    }))
+                    keepalive_pending = True
+                    continue
+
+                response_type = response.get("response")
+                event_type = response.get("event")
+                updates = response.get("devices", [])
+                now = utc_timestamp()
+                with lock:
+                    larnitech = state["larnitech"]
+                    larnitech.update(status="online", heartbeat_at=now, error=None)
+                    changed = merge_larnitech_devices(larnitech["devices"], updates) if isinstance(updates, list) else []
+                    if event_type == "statuses" and changed:
+                        larnitech.update(updated_at=now, last_event_at=now)
+                if response_type == "status-get":
+                    keepalive_pending = False
+                elif event_type == "statuses" and changed:
+                    LOG.info("Larnitech event received for %s", ",".join(changed))
+        except (OSError, TimeoutError, ValueError, json.JSONDecodeError, websocket.WebSocketException) as exc:
+            LOG.warning("Larnitech API2 connection failed: %s", exc)
             with lock:
-                state["larnitech"].update(status="error", error=str(exc))
-        time.sleep(LARNITECH_POLL_SECONDS)
+                reconnects = int(state["larnitech"].get("reconnects", 0)) + 1
+                state["larnitech"].update(status="error", error=str(exc), reconnects=reconnects)
+        finally:
+            if connection is not None:
+                connection.close()
+        time.sleep(min(LARNITECH_POLL_SECONDS, 10))
 
 
 def on_connect(client: mqtt.Client, userdata: object, flags: dict[str, Any], reason_code: Any, properties: Any = None) -> None:
