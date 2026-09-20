@@ -33,6 +33,28 @@ class AddVakioLarnitechXmlTests(unittest.TestCase):
                 '<smart-house><area addr="1" name="VAKIO"/></smart-house>'
             )
 
+    def test_renames_every_existing_selector_with_vakio_prefix(self):
+        original = module.add_vakio_area(
+            '<?xml version="1.0"?><smart-house><area addr="1" name="Setup"/></smart-house>'
+        )
+        legacy = original.replace('name="VAKIO · Режим · ', 'name="Режим · ').replace(
+            'name="VAKIO · Скорость · ', 'name="Скорость · '
+        )
+        result = module.rename_vakio_items(legacy)
+        root = ET.fromstring(result)
+        area = next(area for area in root.findall("area") if area.get("name") == "VAKIO")
+        self.assertEqual(len(area.findall("item")), 15)
+        self.assertTrue(all(item.get("name", "").startswith("VAKIO · ") for item in area.findall("item")))
+        self.assertNotIn("&#x", result)
+
+    def test_rename_rejects_incomplete_vakio_area(self):
+        with self.assertRaisesRegex(ValueError, "Missing VAKIO addresses"):
+            module.rename_vakio_items(
+                '<smart-house><area addr="65536262" name="VAKIO">'
+                '<item addr="407:220" name="VAKIO · Питание"/>'
+                '</area></smart-house>'
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
