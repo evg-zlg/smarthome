@@ -172,6 +172,8 @@ state: dict[str, Any] = {
 mqtt_client: mqtt.Client | None = None
 last_device_message_monotonic: float | None = None
 pending_confirmation: tuple[str, str] | None = None
+fresh_topic_versions: dict[str, int] = {}
+fresh_topic_values: dict[str, tuple[str, float]] = {}
 scenario_guard = threading.Lock()
 scenario_runs: dict[str, dict[str, Any]] = {}
 vakio_bridge_guard = threading.Lock()
@@ -467,12 +469,17 @@ def sync_larnitech_vakio_states(command: str) -> None:
 def vakio_larnitech_command_worker(command: dict[str, str]) -> None:
     key, value = command["command"], command["value"]
     with vakio_bridge_guard:
-        with lock:
-            actual = state["vakio"].get("topics", {}).get(f"{VAKIO_TOPIC}/{key}")
-        if actual == value:
-            return
         try:
-            publish_vakio(command)
+            commands = ([{"command": "state", "value": "on"}] if key in {"workmode", "speed"} else []) + [command]
+            for requested in commands:
+                requested_topic = f"{VAKIO_TOPIC}/{requested['command']}"
+                with lock:
+                    fresh = fresh_topic_values.get(requested_topic)
+                if fresh is not None and fresh[0] == requested["value"] and (
+                    time.monotonic() - fresh[1] <= VAKIO_TELEMETRY_MAX_AGE
+                ):
+                    continue
+                publish_vakio(requested)
             LOG.warning("VAKIO command from Larnitech confirmed: %s=%s", key, value)
         except (PermissionError, RuntimeError, ValueError) as exc:
             LOG.warning("VAKIO command from Larnitech failed: %s=%s: %s", key, value, exc)
@@ -710,6 +717,8 @@ def on_message(client: mqtt.Client, userdata: object, message: mqtt.MQTTMessage)
     with confirmation:
         if not retained:
             last_device_message_monotonic = time.monotonic()
+            fresh_topic_versions[message.topic] = fresh_topic_versions.get(message.topic, 0) + 1
+            fresh_topic_values[message.topic] = (value, last_device_message_monotonic)
         state["vakio"]["topics"][message.topic] = value
         state["vakio"].update(updated_at=utc_timestamp())
         if not retained:
@@ -800,12 +809,16 @@ def publish_vakio(command: dict[str, Any]) -> tuple[str, str]:
     raw_value = VAKIO_RAW_COMMANDS[(key, value)]
     deadline = time.monotonic() + VAKIO_CONFIRM_TIMEOUT
     with confirmation:
+        previous_version = fresh_topic_versions.get(topic, 0)
         pending_confirmation = (topic, value)
         result = mqtt_client.publish(raw_topic, raw_value, qos=1)
         if result.rc != mqtt.MQTT_ERR_SUCCESS:
             pending_confirmation = None
             raise RuntimeError(f"MQTT publish failed: {result.rc}")
-        while pending_confirmation is not None:
+        while not (
+            fresh_topic_versions.get(topic, 0) > previous_version
+            and fresh_topic_values.get(topic, (None, 0))[0] == value
+        ):
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 pending_confirmation = None
@@ -821,8 +834,7 @@ def publish_vakio(command: dict[str, Any]) -> tuple[str, str]:
                     break
                 raise RuntimeError("VAKIO did not confirm the command")
             confirmation.wait(remaining)
-            if state["vakio"]["topics"].get(topic) == value:
-                pending_confirmation = None
+        pending_confirmation = None
     return topic, value
 
 

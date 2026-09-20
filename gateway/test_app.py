@@ -96,6 +96,8 @@ class GatewayTests(unittest.TestCase):
         app.mqtt_client = FakeClient()
         app.last_device_message_monotonic = time.monotonic()
         app.pending_confirmation = None
+        app.fresh_topic_versions.clear()
+        app.fresh_topic_values.clear()
         app.scenario_runs.clear()
 
     def test_allowed_vakio_command(self):
@@ -172,6 +174,47 @@ class GatewayTests(unittest.TestCase):
             app.sync_larnitech_vakio_states = original_sync
         self.assertIsNone(app.last_device_message_monotonic)
         self.assertEqual(synced, [])
+        self.assertNotIn("vakio/state", app.fresh_topic_values)
+
+    def test_retained_value_cannot_confirm_a_new_command(self):
+        class PresenceOnlyClient:
+            def publish(self, topic, value, qos, retain=False):
+                if value == "0687":
+                    message = SimpleNamespace(topic="vakio/system", payload=b"0685", retain=False)
+                    threading.Timer(0.001, app.on_message, args=(self, None, message)).start()
+                return FakeResult()
+
+        original_client = app.mqtt_client
+        original_timeout = app.VAKIO_CONFIRM_TIMEOUT
+        try:
+            app.mqtt_client = PresenceOnlyClient()
+            app.VAKIO_CONFIRM_TIMEOUT = 0.02
+            app.last_device_message_monotonic = None
+            app.on_message(
+                app.mqtt_client, None,
+                SimpleNamespace(topic="vakio/state", payload=b"on", retain=True),
+            )
+            with self.assertRaisesRegex(RuntimeError, "did not confirm"):
+                app.publish_vakio({"command": "state", "value": "on"})
+        finally:
+            app.mqtt_client = original_client
+            app.VAKIO_CONFIRM_TIMEOUT = original_timeout
+
+    def test_mode_from_larnitech_ensures_power_before_mode(self):
+        published = []
+        original_publish = app.publish_vakio
+        original_sync = app.sync_larnitech_vakio_states
+        try:
+            app.publish_vakio = lambda command: published.append(command.copy()) or ("topic", "value")
+            app.sync_larnitech_vakio_states = lambda command: None
+            app.vakio_larnitech_command_worker({"command": "workmode", "value": "night"})
+        finally:
+            app.publish_vakio = original_publish
+            app.sync_larnitech_vakio_states = original_sync
+        self.assertEqual(published, [
+            {"command": "state", "value": "on"},
+            {"command": "workmode", "value": "night"},
+        ])
 
     def test_larnitech_bridge_disables_public_vakio_control(self):
         original_bridge = app.VAKIO_LARNITECH_BRIDGE_ENABLED
