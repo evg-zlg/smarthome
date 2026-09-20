@@ -23,7 +23,7 @@ rfc: ../rfc/larnitech-vakio-raspberry-pi.md
 | Mosquitto | 2.0.21-1 | enabled, active | Локальный MQTT-брокер |
 | Mosquitto clients | 2.0.21-1 | установлен | Диагностика MQTT |
 | Nginx Light | 1.26.3-3+deb13u9 | enabled, active | HTTP и будущий reverse proxy |
-| Python | 3.13.5-1 | установлен | Будущий адаптер Larnitech/VAKIO |
+| Python | 3.13.5-1 | установлен | Адаптер Larnitech/VAKIO |
 | unattended-upgrades | 2.12 | enabled, active | Автоматические обновления безопасности |
 | smarthome-gateway | Python-сервис | enabled, active | Read-only карта Larnitech и MQTT-наблюдение VAKIO |
 | gateway health timer | systemd | enabled, active | Контроль ресурсов каждые 5 минут |
@@ -60,6 +60,10 @@ rfc: ../rfc/larnitech-vakio-raspberry-pi.md
 - Ежедневный локальный backup хранится в `/var/backups/smarthome` с правами
   `0700`; архивы имеют права `0600` и срок хранения 7 дней.
 - Systemd hardening каркаса gateway имеет оценку exposure `3.0 OK`.
+- Gateway держит постоянное WebSocket-соединение с Larnitech API2 и подписан
+  на события датчика CO2 `315:36`. Начальная карта читается через
+  `get-devices`, изменения — через `status-subscribe`; при разрыве сервис
+  переподключается, повторно авторизуется и восстанавливает подписку.
 
 ## Локальная панель состояния
 
@@ -87,6 +91,8 @@ rfc: ../rfc/larnitech-vakio-raspberry-pi.md
 
 - Ethernet не подключён; постоянный шлюз пока зависит от Wi-Fi.
 - Помещение комбинированного датчика физически не подтверждено.
+- Автоматическая логика по CO2 ещё не включена: сервис получает события в
+  read-only режиме, а `control_enabled` остаётся `false`.
 - VAKIO не передаёт телеметрию, пока его MQTT credentials не сохранены; при
   этом MQTT-брокер и само устройство показываются как разные источники.
 - Backup находится на той же SD-карте и предназначен только для локального

@@ -90,6 +90,25 @@ class GatewayTests(unittest.TestCase):
         errors = app.observed_map(source)["errors"]
         self.assertIn("Данные Larnitech устарели", [error["message"] for error in errors])
 
+    def test_decodes_co2_subscription_event(self):
+        self.assertEqual(app.decode_larnitech_event_state("co2-sensor", "0xFB02"), 763)
+
+    def test_merges_subscription_event_into_inventory(self):
+        devices = [{"addr": "315:36", "type": "co2-sensor", "status": {"state": 700}}]
+        changed = app.merge_larnitech_devices(devices, [{"addr": "315:36", "status": "0xFB02"}])
+        self.assertEqual(changed, ["315:36"])
+        self.assertEqual(devices[0]["status"], {"state": 763, "raw": "0xFB02"})
+
+    def test_unknown_event_status_stays_raw(self):
+        self.assertEqual(app.decode_larnitech_event_state("lamp", "0x01"), "0x01")
+
+    def test_real_status_event_shape_updates_co2(self):
+        devices = [{"addr": "315:36", "type": "co2-sensor", "status": {"state": 687}}]
+        event = {"event": "statuses", "devices": [{"addr": "315:36", "status": "0x0B03"}]}
+        changed = app.merge_larnitech_devices(devices, event["devices"])
+        self.assertEqual(changed, ["315:36"])
+        self.assertEqual(devices[0]["status"]["state"], 779)
+
 
 if __name__ == "__main__":
     unittest.main()
