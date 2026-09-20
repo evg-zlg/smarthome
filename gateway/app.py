@@ -32,6 +32,8 @@ MQTT_USERNAME = os.environ.get("MQTT_USERNAME", "gateway")
 MQTT_PASSWORD = os.environ.get("MQTT_PASSWORD", "")
 VAKIO_TOPIC = os.environ.get("VAKIO_TOPIC", "vakio").strip("/")
 CONTROL_ENABLED = os.environ.get("CONTROL_ENABLED", "false").lower() == "true"
+VAKIO_TELEMETRY_MAX_AGE = max(15, int(os.environ.get("VAKIO_TELEMETRY_MAX_AGE", "90")))
+VAKIO_CONFIRM_TIMEOUT = max(1, int(os.environ.get("VAKIO_CONFIRM_TIMEOUT", "8")))
 LARNITECH_SCENARIO_CONTROL_ENABLED = (
     os.environ.get("LARNITECH_SCENARIO_CONTROL_ENABLED", "false").lower() == "true"
 )
@@ -104,6 +106,8 @@ state: dict[str, Any] = {
     "vakio": {"status": "waiting", "updated_at": None, "topics": {}, "error": None},
 }
 mqtt_client: mqtt.Client | None = None
+last_device_message_monotonic: float | None = None
+pending_confirmation: tuple[str, str] | None = None
 scenario_guard = threading.Lock()
 scenario_runs: dict[str, dict[str, Any]] = {}
 
@@ -503,12 +507,6 @@ def on_disconnect(client: mqtt.Client, userdata: object, disconnect_flags: Any, 
         state["mqtt"].update(status="offline", updated_at=utc_timestamp(), error=f"MQTT disconnected: {reason_code}")
 
 
-def on_disconnect(client: mqtt.Client, userdata: object, disconnect_flags: Any, reason_code: Any, properties: Any = None) -> None:
-    del client, userdata, disconnect_flags, properties
-    with lock:
-        state["mqtt"].update(status="offline", updated_at=utc_timestamp(), error=f"MQTT disconnected: {reason_code}")
-
-
 def on_message(client: mqtt.Client, userdata: object, message: mqtt.MQTTMessage) -> None:
     del client, userdata
     global last_device_message_monotonic
@@ -646,7 +644,7 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError("Request body must be an object")
             if self.path == "/vakio/command":
                 topic, value = publish_vakio(command)
-                self.json_response(202, {"accepted": True, "topic": topic, "value": value})
+                self.json_response(200, {"accepted": True, "confirmed": True, "topic": topic, "value": value})
                 return
             if set(command) != {"addr", "request_id"}:
                 raise ValueError("Only addr and request_id are accepted")
