@@ -13,10 +13,26 @@ curl --fail http://127.0.0.1/gateway/healthz
 cat /run/smarthome-gateway-health
 ```
 
-До настройки Larnitech и VAKIO ожидаемый ответ gateway:
+Проверить компактную модель панели без вывода полного массива каналов:
 
-```json
-{"status":"waiting_for_configuration","larnitech":"not_configured","vakio":"not_configured","control_enabled":false}
+```bash
+curl --fail --silent http://127.0.0.1/gateway/map | \
+  jq '{status, control_enabled, observed: .observed | {
+    services, api_channels, climate, air_conditioner, errors, read_only
+  }}'
+```
+
+Нормальное состояние допускает `VAKIO: waiting`, пока устройство не передаёт
+MQTT-телеметрию. `MQTT: online` при этом подтверждает доступность самого брокера.
+`control_enabled` должен оставаться `false`, а `observed.read_only` — `true`.
+
+Статическая панель доступна по `http://192.168.1.183/` и обновляет данные раз в
+10 секунд. При замене файлов проверить синтаксис и перезапустить только gateway:
+
+```bash
+python3 -m py_compile /opt/smarthome-gateway/app.py
+sudo systemctl restart smarthome-gateway
+curl --fail http://127.0.0.1/
 ```
 
 ## Мониторинг ресурсов

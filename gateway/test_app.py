@@ -1,7 +1,30 @@
 import importlib.util
 import os
+import sys
 import unittest
+import json
 from pathlib import Path
+from types import ModuleType, SimpleNamespace
+
+# Unit tests exercise the pure observation model and command validation. Keep
+# them runnable on a development machine without the Raspberry Pi adapters.
+try:
+    import paho.mqtt.client  # noqa: F401
+except ModuleNotFoundError:
+    paho = ModuleType("paho")
+    paho_mqtt = ModuleType("paho.mqtt")
+    paho_client = ModuleType("paho.mqtt.client")
+    paho_client.MQTT_ERR_SUCCESS = 0
+    paho_client.CallbackAPIVersion = SimpleNamespace(VERSION2=2)
+    paho_client.Client = object
+    paho_mqtt.client = paho_client
+    paho.mqtt = paho_mqtt
+    sys.modules.update({"paho": paho, "paho.mqtt": paho_mqtt, "paho.mqtt.client": paho_client})
+
+try:
+    import websocket  # noqa: F401
+except ModuleNotFoundError:
+    sys.modules["websocket"] = ModuleType("websocket")
 
 os.environ["CONTROL_ENABLED"] = "true"
 spec = importlib.util.spec_from_file_location("gateway_app", Path(__file__).with_name("app.py"))
@@ -32,6 +55,40 @@ class GatewayTests(unittest.TestCase):
 
     def test_snapshot_requires_larnitech_key(self):
         self.assertEqual(app.snapshot()["larnitech"]["status"], "api_key_required")
+
+    def test_mqtt_v2_reason_code_marks_broker_online(self):
+        class SuccessReasonCode:
+            def __eq__(self, other):
+                return other == 0
+
+        client = SimpleNamespace(subscribe=lambda topic: None)
+        app.on_connect(client, None, {}, SuccessReasonCode())
+        self.assertEqual(app.state["mqtt"]["status"], "online")
+
+    def test_observed_map_separates_physical_modules_and_api_channels(self):
+        inventory = json.loads(
+            (Path(__file__).parents[1] / "docs/inventory/larnitech-entities.json").read_text()
+        )
+        source = {
+            "larnitech": {"status": "online", "updated_at": app.utc_timestamp(), "devices": inventory["entities"], "error": None},
+            "mqtt": {"status": "online", "updated_at": app.utc_timestamp(), "error": None},
+            "vakio": {"status": "waiting", "updated_at": None, "topics": {}, "error": None},
+        }
+        observed = app.observed_map(source)
+        self.assertEqual(len(observed["physical_modules"]), 4)
+        self.assertEqual(observed["api_channels"]["total"], 263)
+        self.assertEqual(observed["climate"][0]["value"], 847)
+        self.assertTrue(observed["air_conditioner"]["connected"])
+        self.assertEqual(observed["air_conditioner"]["status"]["target"], 22.0)
+
+    def test_stale_larnitech_data_is_reported(self):
+        source = {
+            "larnitech": {"status": "online", "updated_at": "2020-01-01T00:00:00Z", "devices": [], "error": None},
+            "mqtt": {"status": "online", "updated_at": app.utc_timestamp(), "error": None},
+            "vakio": {"status": "waiting", "updated_at": None, "topics": {}, "error": None},
+        }
+        errors = app.observed_map(source)["errors"]
+        self.assertIn("Данные Larnitech устарели", [error["message"] for error in errors])
 
 
 if __name__ == "__main__":
