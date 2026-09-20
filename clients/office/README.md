@@ -18,3 +18,7 @@ scripts/device-ssh office rasppi3b 'sudo -n true && echo sudo-ok'
 Доступ к контроллеру Larnitech находится в
 `credentials/larnitech/controller.yaml`. Файл содержит адрес панели,
 административный логин/пароль, API2 WebSocket URL и существующий API key.
+
+Планы, не относящиеся к действующему контуру, хранятся отдельно. Концепт
+будущего сайта услуг умного дома описан в
+[`plans/website-concept.md`](plans/website-concept.md).
