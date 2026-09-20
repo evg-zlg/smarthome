@@ -22,8 +22,9 @@ curl --fail --silent http://127.0.0.1/gateway/map | \
   }}'
 ```
 
-Нормальное состояние текущего контура: `MQTT: online`, `VAKIO: online`,
-`control_enabled=true` для ручных команд VAKIO и `observed.read_only=true` для
+Нормальное состояние текущего контура: `MQTT: online`, VAKIO `online` только
+после свежего сообщения прибора, `control_enabled=false` при активном мосте
+Larnitech и `observed.read_only=true` для
 карты наблюдения. Управление Larnitech независимо: `scenario_control.enabled`
 должно быть `true`, а `allowed=true` — только у семи исследованных адресов
 `315:246`, `315:250`, `407:246`, `407:247`, `407:248`, `456:46`, `456:47`.
@@ -101,10 +102,33 @@ sudo nft list table inet smarthome_mqtt
 sudo mosquitto_sub -h 127.0.0.1 -u gateway -P '<пароль>' -t 'vakio/#' -v
 ```
 
-Команды публикуются в соответствующий топик. Например, скорость 4 —
-это payload `4` в `vakio/speed`. Отправлять команду можно только после свежей
-телеметрии и с последующим ответом прибора. Gateway подписывается с MQTT v5
-`noLocal`, чтобы не принять собственную публикацию за подтверждение.
+Штатные команды Base Smart публикуются как raw payload в `vakio/mode`:
+`06000/06001` для питания, `06010`–`06041` для семи режимов и `06501`–`06507`
+для скоростей. Их вручную не публикуют: gateway принимает только 15 allowlist-
+адресов Larnitech. Gateway подписывается с MQTT v5 `noLocal`, а retained
+сообщения не считает свежим подтверждением.
+
+Проверка моста без управления прибором:
+
+```bash
+curl --fail --silent http://127.0.0.1/gateway/healthz | \
+  jq '{control_enabled, vakio_status: .vakio.status,
+    bridge: .vakio_larnitech_bridge}'
+```
+
+При `bridge.enabled=true` ожидается `control_enabled=false`: веб-панель не
+может обойти Larnitech. Если VAKIO не прислал свежую телеметрию после запуска,
+`vakio.status=waiting` является безопасным состоянием, даже если в
+`vakio.topics` виден старый retained `state=on`.
+
+Интерфейс берёт текущие значения только из `vakio.confirmed_topics`. Поле
+`vakio.topics` предназначено для диагностики retained-снимка и не должно
+использоваться для надписи «Включена» или выбранного режима.
+
+При включении режима или скорости из Larnitech gateway сначала отправляет
+питание `on` и ожидает новое, не retained подтверждение. Только затем
+отправляется выбранный режим или скорость. Поэтому в сценарии Larnitech не
+нужно добавлять отдельную строку питания перед `Режим · Ночной`.
 
 ## Сценарии Larnitech
 
