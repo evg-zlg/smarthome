@@ -45,6 +45,35 @@ journalctl --disk-usage
 systemd-analyze cat-config systemd/journald.conf
 ```
 
+## MQTT VAKIO
+
+VAKIO Base Smart использует пустые login/password. Поле `topic` в его
+веб-интерфейсе — уникальное имя прибора. Для текущего единственного
+прибора используется `vakio`. Проверенные топики текущей ревизии:
+`vakio/state`, `vakio/workmode` и `vakio/speed`.
+
+Перед запуском LAN-listener обязательно проверить firewall:
+
+```bash
+sudo systemctl status smarthome-mqtt-firewall.service
+sudo nft list table inet smarthome_mqtt
+```
+
+Должно быть два правила TCP/1883: `accept` только от VAKIO и `reject`
+для остальных LAN-адресов. Gateway подключается через loopback с
+отдельными credentials.
+
+После подключения сначала нужно увидеть сообщения прибора:
+
+```bash
+sudo mosquitto_sub -h 127.0.0.1 -u gateway -P '<пароль>' -t 'vakio/#' -v
+```
+
+Команды публикуются в соответствующий топик. Например, скорость 4 —
+это payload `4` в `vakio/speed`. Отправлять команду можно только после свежей
+телеметрии и с последующим ответом прибора. Gateway подписывается с MQTT v5
+`noLocal`, чтобы не принять собственную публикацию за подтверждение.
+
 ## Локальный backup конфигурации
 
 Таймер ежедневно создаёт архив несекретной конфигурации в
