@@ -520,13 +520,19 @@ def on_message(client: mqtt.Client, userdata: object, message: mqtt.MQTTMessage)
 
 
 def start_mqtt() -> mqtt.Client:
-    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id="smarthome-gateway")
+    client = mqtt.Client(
+        mqtt.CallbackAPIVersion.VERSION2,
+        client_id="smarthome-gateway",
+        protocol=mqtt.MQTTv5,
+    )
     if MQTT_PASSWORD:
         client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
     client.on_connect = on_connect
     client.on_disconnect = on_disconnect
     client.on_message = on_message
-    client.connect_async(MQTT_HOST, MQTT_PORT, keepalive=30)
+    # The broker is a required local systemd dependency, so a synchronous
+    # initial connect is deterministic and lets systemd retry on failure.
+    client.connect(MQTT_HOST, MQTT_PORT, keepalive=30)
     client.loop_start()
     return client
 
@@ -539,7 +545,7 @@ def publish_vakio(command: dict[str, Any]) -> tuple[str, str]:
         raise RuntimeError("MQTT is not available")
     allowed: dict[str, set[str]] = {
         "state": {"on", "off"},
-        "workmode": {"inflow", "inflow_max", "recuperator", "winter", "outflow", "outflow_max"},
+        "workmode": {"inflow", "inflow_max", "recuperator", "winter", "outflow", "outflow_max", "night"},
         "speed": {str(value) for value in range(1, 8)},
     }
     key = str(command.get("command", ""))

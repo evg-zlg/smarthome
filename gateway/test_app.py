@@ -88,7 +88,12 @@ class GatewayTests(unittest.TestCase):
             def __eq__(self, other):
                 return other == 0
 
-        client = SimpleNamespace(subscribe=lambda topic, options=None: None)
+        subscription = {}
+
+        def subscribe(topic, options=None):
+            subscription.update(topic=topic, options=options)
+
+        client = SimpleNamespace(subscribe=subscribe)
         app.on_connect(client, None, {}, SuccessReasonCode())
         self.assertEqual(app.state["mqtt"]["status"], "online")
         self.assertEqual(subscription["topic"], "vakio/#")
