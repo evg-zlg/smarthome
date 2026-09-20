@@ -33,6 +33,17 @@ except ModuleNotFoundError:
 os.environ["CONTROL_ENABLED"] = "true"
 os.environ["LARNITECH_SCENARIO_CONTROL_ENABLED"] = "true"
 os.environ["LARNITECH_SCENARIO_ALLOWLIST"] = "315:250"
+os.environ["VAKIO_LARNITECH_POWER_ADDR"] = "407:220"
+os.environ["VAKIO_LARNITECH_MODE_ADDRS"] = ",".join(
+    f"{mode}=407:{221 + index}"
+    for index, mode in enumerate((
+        "inflow", "inflow_max", "recuperator", "winter",
+        "outflow", "outflow_max", "night",
+    ))
+)
+os.environ["VAKIO_LARNITECH_SPEED_ADDRS"] = ",".join(
+    f"{speed}=407:{227 + speed}" for speed in range(1, 8)
+)
 spec = importlib.util.spec_from_file_location("gateway_app", Path(__file__).with_name("app.py"))
 app = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(app)
@@ -43,9 +54,23 @@ class FakeResult:
 
 
 class FakeClient:
-    def publish(self, topic, value, qos):
-        self.message = (topic, value, qos)
-        message = SimpleNamespace(topic=topic, payload=value.encode())
+    def publish(self, topic, value, qos, retain=False):
+        self.message = (topic, value, qos, retain)
+        semantic = {
+            "06000": ("state", "off"), "06001": ("state", "on"),
+            "06010": ("workmode", "recuperator"), "06011": ("workmode", "winter"),
+            "06021": ("workmode", "inflow"), "06022": ("workmode", "inflow_max"),
+            "06031": ("workmode", "outflow"), "06032": ("workmode", "outflow_max"),
+            "06041": ("workmode", "night"),
+            **{f"0650{speed}": ("speed", str(speed)) for speed in range(1, 8)},
+        }.get(value)
+        if semantic:
+            key, confirmed = semantic
+            message = SimpleNamespace(
+                topic=f"{app.VAKIO_TOPIC}/{key}", payload=confirmed.encode(),
+            )
+        else:
+            message = SimpleNamespace(topic=topic, payload=value.encode())
         threading.Timer(0.01, app.on_message, args=(self, None, message)).start()
         return FakeResult()
 
@@ -71,7 +96,13 @@ class GatewayTests(unittest.TestCase):
         app.mqtt_client = FakeClient()
         app.last_device_message_monotonic = time.monotonic()
         app.pending_confirmation = None
+        app.fresh_topic_versions.clear()
+        app.fresh_topic_values.clear()
         app.scenario_runs.clear()
+        with app.lock:
+            app.state["vakio"]["topics"] = {}
+            app.state["vakio"]["confirmed_topics"] = {}
+            app.state["vakio"]["commanded_topics"] = {}
 
     def test_allowed_vakio_command(self):
         self.assertEqual(app.publish_vakio({"command": "speed", "value": 4}), ("vakio/speed", "4"))
@@ -100,9 +131,129 @@ class GatewayTests(unittest.TestCase):
         self.assertTrue(subscription["options"].noLocal)
 
     def test_rejects_command_without_fresh_telemetry(self):
+        class SilentClient:
+            def publish(self, topic, value, qos):
+                return FakeResult()
+
+        original_client = app.mqtt_client
+        original_timeout = app.VAKIO_CONFIRM_TIMEOUT
+        try:
+            app.mqtt_client = SilentClient()
+            app.VAKIO_CONFIRM_TIMEOUT = 0.01
+            app.last_device_message_monotonic = None
+            with self.assertRaisesRegex(RuntimeError, "telemetry is not fresh"):
+                app.publish_vakio({"command": "state", "value": "on"})
+        finally:
+            app.mqtt_client = original_client
+            app.VAKIO_CONFIRM_TIMEOUT = original_timeout
+
+    def test_stale_command_requests_presence_before_control(self):
         app.last_device_message_monotonic = None
-        with self.assertRaisesRegex(RuntimeError, "telemetry is not fresh"):
-            app.publish_vakio({"command": "state", "value": "on"})
+        self.assertEqual(
+            app.publish_vakio({"command": "state", "value": "on"}),
+            ("vakio/state", "on"),
+        )
+        self.assertEqual(app.mqtt_client.message, ("vakio/mode", "06001", 1, False))
+
+    def test_every_operating_command_has_a_raw_device_command(self):
+        expected = {
+            *(('state', value) for value in ('on', 'off')),
+            *(('workmode', value) for value in app.VAKIO_MODES),
+            *(('speed', value) for value in app.VAKIO_SPEEDS),
+        }
+        self.assertEqual(set(app.VAKIO_RAW_COMMANDS), expected)
+
+    def test_retained_message_does_not_make_telemetry_fresh(self):
+        app.last_device_message_monotonic = None
+        original_bridge = app.VAKIO_LARNITECH_BRIDGE_ENABLED
+        original_sync = app.sync_larnitech_vakio_states
+        synced = []
+        try:
+            app.VAKIO_LARNITECH_BRIDGE_ENABLED = True
+            app.sync_larnitech_vakio_states = synced.append
+            message = SimpleNamespace(topic="vakio/state", payload=b"on", retain=True)
+            app.on_message(app.mqtt_client, None, message)
+        finally:
+            app.VAKIO_LARNITECH_BRIDGE_ENABLED = original_bridge
+            app.sync_larnitech_vakio_states = original_sync
+        self.assertIsNone(app.last_device_message_monotonic)
+        self.assertEqual(synced, [])
+        self.assertNotIn("vakio/state", app.fresh_topic_values)
+        self.assertNotIn("vakio/state", app.state["vakio"]["confirmed_topics"])
+
+    def test_non_retained_message_is_exposed_as_confirmed(self):
+        message = SimpleNamespace(topic="vakio/state", payload=b"on", retain=False)
+        app.on_message(app.mqtt_client, None, message)
+        self.assertEqual(
+            app.state["vakio"]["confirmed_topics"]["vakio/state"]["value"],
+            "on",
+        )
+
+    def test_retained_value_cannot_confirm_a_new_command(self):
+        class PresenceOnlyClient:
+            def publish(self, topic, value, qos, retain=False):
+                if value == "0687":
+                    message = SimpleNamespace(topic="vakio/system", payload=b"0685", retain=False)
+                    threading.Timer(0.001, app.on_message, args=(self, None, message)).start()
+                return FakeResult()
+
+        original_client = app.mqtt_client
+        original_timeout = app.VAKIO_CONFIRM_TIMEOUT
+        try:
+            app.mqtt_client = PresenceOnlyClient()
+            app.VAKIO_CONFIRM_TIMEOUT = 0.02
+            app.last_device_message_monotonic = None
+            app.on_message(
+                app.mqtt_client, None,
+                SimpleNamespace(topic="vakio/state", payload=b"on", retain=True),
+            )
+            with self.assertRaisesRegex(RuntimeError, "did not confirm"):
+                app.publish_vakio({"command": "state", "value": "on"})
+        finally:
+            app.mqtt_client = original_client
+            app.VAKIO_CONFIRM_TIMEOUT = original_timeout
+
+    def test_mode_from_larnitech_ensures_power_before_mode(self):
+        published = []
+        original_publish = app.publish_vakio
+        original_sync = app.sync_larnitech_vakio_states
+        try:
+            app.publish_vakio = lambda command: published.append(command.copy()) or ("topic", "value")
+            app.sync_larnitech_vakio_states = lambda command: None
+            app.vakio_larnitech_command_worker({"command": "workmode", "value": "night"})
+        finally:
+            app.publish_vakio = original_publish
+            app.sync_larnitech_vakio_states = original_sync
+        self.assertEqual(published, [
+            {"command": "state", "value": "on"},
+            {"command": "workmode", "value": "night"},
+        ])
+
+    def test_larnitech_bridge_disables_public_vakio_control(self):
+        original_bridge = app.VAKIO_LARNITECH_BRIDGE_ENABLED
+        original_control = app.CONTROL_ENABLED
+        try:
+            app.VAKIO_LARNITECH_BRIDGE_ENABLED = True
+            app.CONTROL_ENABLED = True
+            self.assertFalse(app.snapshot()["control_enabled"])
+            self.assertTrue(app.snapshot()["vakio_larnitech_bridge"]["enabled"])
+        finally:
+            app.VAKIO_LARNITECH_BRIDGE_ENABLED = original_bridge
+            app.CONTROL_ENABLED = original_control
+
+    def test_larnitech_vakio_state_uses_virtual_selectors(self):
+        devices = [
+            {"addr": app.VAKIO_LARNITECH_POWER_ADDR, "status": {"state": "off"}},
+            {"addr": app.VAKIO_LARNITECH_MODE_ADDRS["night"], "status": {"state": "on"}},
+            {"addr": app.VAKIO_LARNITECH_SPEED_ADDRS["2"], "status": {"state": "on"}},
+        ]
+        self.assertEqual(app.larnitech_vakio_state(devices), {
+            "available": True,
+            "power": "off",
+            "mode": "night",
+            "speed": "2",
+            "source": "larnitech",
+        })
 
     def test_observed_map_separates_physical_modules_and_api_channels(self):
         inventory = json.loads(
@@ -202,11 +353,62 @@ class GatewayTests(unittest.TestCase):
         self.assertEqual(changed, ["315:36"])
         self.assertEqual(devices[0]["status"], {"state": 763, "raw": "0xFB02"})
 
-    def test_unknown_event_status_stays_raw(self):
-        self.assertEqual(app.decode_larnitech_event_state("lamp", "0x01"), "0x01")
+    def test_lamp_event_status_is_decoded(self):
+        self.assertEqual(app.decode_larnitech_event_state("lamp", "0x01"), "on")
+        self.assertEqual(app.decode_larnitech_event_state("lamp", "0x00"), "off")
+
+    def test_larnitech_power_button_maps_both_states(self):
+        devices = [{"addr": "407:220", "type": "lamp"}]
+        for state, raw in (("on", "0x01"), ("off", "0x00")):
+            command = app.vakio_command_from_larnitech_update(
+                {"addr": "407:220", "status": raw}, devices,
+            )
+            self.assertEqual(command, {"command": "state", "value": state})
+
+    def test_all_larnitech_mode_buttons_map_to_supported_commands(self):
+        devices = [
+            {"addr": addr, "type": "lamp"}
+            for addr in app.VAKIO_LARNITECH_MODE_ADDRS.values()
+        ]
+        commands = {
+            app.vakio_command_from_larnitech_update(
+                {"addr": addr, "status": "0x01"}, devices,
+            )["value"]
+            for addr in app.VAKIO_LARNITECH_MODE_ADDRS.values()
+        }
+        self.assertEqual(commands, set(app.VAKIO_MODES))
+
+    def test_all_larnitech_speed_buttons_map_to_supported_commands(self):
+        devices = [
+            {"addr": addr, "type": "lamp"}
+            for addr in app.VAKIO_LARNITECH_SPEED_ADDRS.values()
+        ]
+        commands = {
+            app.vakio_command_from_larnitech_update(
+                {"addr": addr, "status": {"state": "on"}}, devices,
+            )["value"]
+            for addr in app.VAKIO_LARNITECH_SPEED_ADDRS.values()
+        }
+        self.assertEqual(commands, set(app.VAKIO_SPEEDS))
+
+    def test_mode_and_speed_off_events_do_not_send_commands(self):
+        addr = app.VAKIO_LARNITECH_MODE_ADDRS["night"]
+        devices = [{"addr": addr, "type": "lamp"}]
+        self.assertIsNone(app.vakio_command_from_larnitech_update(
+            {"addr": addr, "status": "0x00"}, devices,
+        ))
+
+    def test_unknown_larnitech_address_cannot_control_vakio(self):
+        self.assertIsNone(app.vakio_command_from_larnitech_update(
+            {"addr": "407:199", "status": "0x01"},
+            [{"addr": "407:199", "type": "lamp"}],
+        ))
 
     def test_default_subscriptions_include_co2_and_air_conditioner(self):
-        self.assertEqual(app.LARNITECH_SUBSCRIBE_ADDRS, ("315:36", "456:249"))
+        self.assertEqual(
+            app.LARNITECH_SUBSCRIBE_ADDRS,
+            ("315:36", "456:249", *app.VAKIO_LARNITECH_ADDRS),
+        )
 
     def test_ac_binary_event_preserves_detailed_state_until_refresh(self):
         detailed = {
