@@ -29,6 +29,13 @@ rfc: ../rfc/larnitech-vakio-raspberry-pi.md
 | gateway health timer | systemd | enabled, active | Контроль ресурсов каждые 5 минут |
 | gateway backup timer | systemd | enabled, active | Ежедневный снимок несекретной конфигурации |
 
+Автозапуск `NetworkManager-wait-online`, `smarthome-mqtt-firewall`,
+`mosquitto`, `smarthome-gateway` и `nginx` явно включён. 20 сентября 2026 года
+выполнен проверочный рестарт `smarthome-gateway`: после запуска MQTT,
+Larnitech и VAKIO самостоятельно перешли в состояние `online`, мост
+Larnitech ↔ VAKIO остался включён. Полная перезагрузка Raspberry Pi в рамках
+этой проверки не выполнялась.
+
 ## Сетевые границы
 
 - SSH слушает TCP `22` на LAN-интерфейсах.
